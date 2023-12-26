@@ -82,8 +82,8 @@
       {
         "Name": "Data",
         "Parser": {
-          "Type": 11,
-          "Target": "DnsRpcRecord{Type}"
+          "Type": 13,
+          "Target": "DNS.DnsRpcRecord{Type}"
         }
       }
     ]

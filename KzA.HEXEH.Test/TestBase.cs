@@ -15,9 +15,9 @@ namespace KzA.HEXEH.Test
             Output = output;
             var loggingPath = Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? "./Log", "HEXEH", "Test-.Log");
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Verbose()
                 .Enrich.WithCaller(false, 1)
-                .WriteTo.TestOutput(Output, outputTemplate: LOGGING_TEMPLATE)
+                //.WriteTo.TestOutput(Output, outputTemplate: LOGGING_TEMPLATE)
                 .WriteTo.File(loggingPath, rollingInterval: RollingInterval.Day, outputTemplate: LOGGING_TEMPLATE)
                 .CreateLogger();
         }

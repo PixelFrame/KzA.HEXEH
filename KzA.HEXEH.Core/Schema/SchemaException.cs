@@ -1,14 +1,8 @@
 ﻿namespace KzA.HEXEH.Core.Schema
 {
-    internal class SchemaException : Exception
+    internal class SchemaException(string Message, string SchemaName, string FieldName, Exception? InnerException = null) : Exception(Message, InnerException)
     {
-        public string SchemaName { get; set; } = string.Empty;
-        public string FieldName { get; set; } = string.Empty;
-        public SchemaException(string Message, string SchemaName, string FieldName)
-            : base(Message)
-        {
-            this.SchemaName = SchemaName;
-            this.FieldName = FieldName;
-        }
+        public string SchemaName { get; set; } = SchemaName;
+        public string FieldName { get; set; } = FieldName;
     }
 }

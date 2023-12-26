@@ -1,0 +1,15 @@
+{
+  "Name": "DNS RPC Record: NS",
+  "Structure": {
+    "Fields": "NS",
+    "Definition": [
+      {
+        "Name": "NS",
+        "Parser": {
+          "Type": 11,
+          "Target": "DNS.DnsCountName"
+        }
+      }
+    ]
+  }
+}

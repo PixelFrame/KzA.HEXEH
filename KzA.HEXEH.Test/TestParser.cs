@@ -138,7 +138,7 @@ namespace KzA.HEXEH.Test
         [Fact]
         public void TestAvailableParsers()
         {
-            Output.WriteLine(ParserFinder.AvailableParsers.Select(x => x.FullName).Aggregate((x, y) => $"{x}{Environment.NewLine}{y}"));
+            Output.WriteLine(ParserManager.AvailableParsers.Select(x => x.FullName).Aggregate((x, y) => $"{x}{Environment.NewLine}{y}"));
         }
     }
 }

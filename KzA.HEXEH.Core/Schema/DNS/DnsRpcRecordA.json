@@ -7,7 +7,7 @@
         "Name": "A",
         "Parser": {
           "Type": 10,
-          "Target": "IPv4Addr"
+          "Target": "Networking.IPv4Addr"
         }
       }
     ]

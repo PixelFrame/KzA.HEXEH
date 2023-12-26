@@ -1,0 +1,36 @@
+{
+  "Name": "Condition Parser Test",
+  "Structure": {
+    "Fields": "Data1:Data2:Next1:Next2",
+    "Definition": [
+      {
+        "Name": "Data1",
+        "Parser": {
+          "Type": 0,
+          "Target": "BYTE"
+        }
+      },
+      {
+        "Name": "Data2",
+        "Parser": {
+          "Type": 0,
+          "Target": "BYTE"
+        }
+      },
+      {
+        "Name": "Next1",
+        "Parser": {
+          "Type": 14,
+          "Target": "[Data1;0:Networking.IPv4Addr;1:Networking.IPv6Addr;:Networking.Fqdn]"
+        }
+      },
+      {
+        "Name": "Next2",
+        "Parser": {
+          "Type": 15,
+          "Target": "[Data2;0:DNS.DnsRpcRecordA;1:DNS.DnsRpcRecordCNAME]"
+        }
+      }
+    ]
+  }
+}

@@ -3,18 +3,29 @@ using Serilog;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Web.Services.Description;
 
 namespace KzA.HEXEH.Core.Schema
 {
-    internal static class SchemaProcessor
+    internal static partial class SchemaProcessor
     {
-        internal static SchemaJsonObject LoadSchema(string schemaJson)
+        internal static SchemaJsonObject LoadSchema(Type ParserType)
         {
-            Log.Information("Loading schema {schemaJson}", schemaJson);
-            var schemaJsonContent = File.ReadAllText($"./Schema/{schemaJson}.json");
+            if (!ParserType.IsAssignableTo(typeof(IParser))) 
+                throw new ArgumentException($"{ParserType.FullName} is not a schema parser");
+            var schemaName = GenerateSchemaFilePath(ParserType);
+            if (ParserManager.CreatedSchema.TryGetValue(schemaName, out SchemaJsonObject? value))
+            {
+                Log.Verbose("SchemaJsonObject {schemaName} existing", schemaName);
+                return value;
+            }
+            Log.Verbose("Loading schema {schemaName}", schemaName);
+            var schemaJsonContent = File.ReadAllText($"./Schema/{schemaName}");
             Log.Debug($"Schema content:{Environment.NewLine}{{schemaJsonContent}}", schemaJsonContent);
             var schema = JsonSerializer.Deserialize<SchemaJsonObject>(schemaJsonContent)!;
-            Log.Information("Loaded schema {schemaJson}", schemaJson);
+            ParserManager.CreatedSchema.Add(schemaName, schema);
+            Log.Verbose("Loaded schema {schemaName}", schemaName);
             return schema;
         }
 
@@ -26,6 +37,12 @@ namespace KzA.HEXEH.Core.Schema
             {
                 foreach (var enumObj in schemaObj.Enums)
                 {
+                    if (ParserManager.CreatedEnums.TryGetValue(enumObj.Name, out Type? value))
+                    {
+                        Log.Verbose("Flag type {enumName} existing", enumObj.Name);
+                        types.Add(value);
+                        continue;
+                    }
                     Log.Verbose("Creating Enum type {enumName}", enumObj.Name);
                     var eb = Global.DynamicModule.DefineEnum($"KzA.HEXEH.Core.Dynamic.Enums.{enumObj.Name}", TypeAttributes.Public, typeof(int));
                     foreach (var item in enumObj.Definition)
@@ -35,6 +52,7 @@ namespace KzA.HEXEH.Core.Schema
                     var enumType = eb.CreateType();
                     Log.Verbose("Created Enum type {enumName}", enumObj.Name);
                     types.Add(enumType);
+                    ParserManager.CreatedEnums.Add(enumObj.Name, enumType);
                 }
             }
 
@@ -42,6 +60,12 @@ namespace KzA.HEXEH.Core.Schema
             {
                 foreach (var flagObj in schemaObj.Flags)
                 {
+                    if (ParserManager.CreatedEnums.TryGetValue(flagObj.Name, out Type? value))
+                    {
+                        Log.Verbose("Flag type {enumName} existing", flagObj.Name);
+                        types.Add(value);
+                        continue;
+                    }
                     Log.Verbose("Creating Flag type {enumName}", flagObj.Name);
                     var eb = Global.DynamicModule.DefineEnum($"KzA.HEXEH.Core.Dynamic.Enums.{flagObj.Name}", TypeAttributes.Public, typeof(int));
                     var flagsAttrib = new CustomAttributeBuilder(typeof(FlagsAttribute).GetConstructor(Type.EmptyTypes)!, Array.Empty<object>());
@@ -53,6 +77,7 @@ namespace KzA.HEXEH.Core.Schema
                     var flagsType = eb.CreateType();
                     Log.Verbose("Created Flag type {enumName}", flagObj.Name);
                     types.Add(flagsType);
+                    ParserManager.CreatedEnums.Add(flagObj.Name, flagsType);
                 }
             }
             return types;
@@ -64,15 +89,43 @@ namespace KzA.HEXEH.Core.Schema
             var schemaFiles = dir.EnumerateFiles("*.json", SearchOption.AllDirectories);
             foreach (var schemaFile in schemaFiles)
             {
-                Log.Verbose("Creating Parser for schema {schemaFile}", schemaFile);
+                var typeName = ProcessSchemaFileName(schemaFile);
+                if (typeName == null)
+                {
+                    Log.Warning("Invalid schema name {schemaFile}, skipping", schemaFile);
+                    continue;
+                }
+                Log.Verbose("Creating Parser for schema {schemaFile}, type name {typeName}", schemaFile, typeName);
                 var tb = Global.DynamicModule.DefineType(
-                        $"KzA.HEXEH.Core.Dynamic.Parser.{Path.GetFileNameWithoutExtension(schemaFile.FullName)}Parser",
+                        typeName,
                         TypeAttributes.Public | TypeAttributes.Class,
                         typeof(SchemaParser));
                 _ = tb.CreateType();
                 Log.Verbose("Created Parser for schema {schemaFile}", schemaFile);
             }
-            ParserFinder.RefreshParsers();
+            ParserManager.RefreshParsers();
         }
+
+        private static string GenerateSchemaFilePath(Type ParserType)
+        {
+            var typeName = ParserType.FullName![30..];
+            typeName = typeName.Remove(typeName.Length - 6);
+            return typeName.Replace('.', Path.DirectorySeparatorChar) + ".json";
+        }
+
+        private static string? ProcessSchemaFileName(FileInfo schemaFile)
+        {
+            if (!TypeNameRegex().Match(schemaFile.Name).Success)
+            {
+                return null;
+            }
+            var relative = Path.GetRelativePath("./Schema", schemaFile.FullName);
+            var typeName = relative.Remove(relative.Length - 5).Replace(Path.DirectorySeparatorChar, '.');
+            var fullTypeName = "KzA.HEXEH.Core.Dynamic.Parser." + typeName + "Parser";
+            return fullTypeName;
+        }
+
+        [GeneratedRegex(@"^[a-z0-9_]+\.json$", RegexOptions.IgnoreCase)]
+        private static partial Regex TypeNameRegex();
     }
 }

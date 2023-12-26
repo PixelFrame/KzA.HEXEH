@@ -28,8 +28,12 @@
         {
             Basic = 0,
             BasicConvert = 1,
-            NextParser = 10,
-            NextParserConditional = 11,
+            NextParserBuiltin = 10,
+            NextParserSchema = 11,
+            NextParserBuiltinInterpolation = 12,
+            NextParserSchemaInterpolation = 13,
+            NextParserBuiltinCondition = 14,
+            NextParserSchemaCondition = 15,
             PsScript = 20,
         }
 

@@ -78,7 +78,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 if (targetTypeNameObj is string targetTypeName)
                 {
-                    nextParser = ParserFinder.InstantiateParserByName(targetTypeName);
+                    nextParser = ParserManager.InstantiateParserByBaseName(targetTypeName);
                 }
                 else
                 {
