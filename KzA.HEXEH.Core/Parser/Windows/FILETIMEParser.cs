@@ -1,54 +1,59 @@
 ﻿using KzA.HEXEH.Core.Output;
+using System;
+using System.Buffers.Binary;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace KzA.HEXEH.Core.Parser.Common
+namespace KzA.HEXEH.Core.Parser.Windows
 {
-    public class NullTerminatedAsciiStringParser : IParser
+    internal class FILETIMEParser : IParser
     {
         public ParserType Type => ParserType.Hardcoded;
-        private Encoding encoding = Encoding.ASCII;
 
         public Dictionary<string, Type> GetOptions()
         {
-            return new();
+            return [];
         }
 
         public DataNode Parse(in ReadOnlySpan<byte> Input)
         {
-            return Parse(Input, Input.Length);
+            return Parse(Input, 0);
         }
 
         public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
         {
-            return Parse(Input, 0, out Read);
+            Read = 8;
+            return Parse(Input, 0);
         }
 
         public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            var filetime = BinaryPrimitives.ReadInt64LittleEndian(Input.Slice(Offset,8));
+            var datetime = DateTime.FromFileTime(filetime);
+            return new DataNode()
+            {
+                Label = "FILETIME",
+                Value = datetime.ToString()
+            };
         }
 
         public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
         {
-            byte[] terminator = [0x00];
-            var len = Input.IndexOf(terminator);
-            Read = len + 1;
-            return new DataNode($"String ({encoding.EncodingName})", encoding.GetString(Input.Slice(Offset, len).ToArray()));
+            Read = 8;
+            return Parse(Input, Offset);
         }
 
         public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
         {
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
-            {
-                throw new ArgumentException("Given length does not match actual string length");
-            }
-            return res;
+            if (Length != 8) throw new ArgumentException("FILETIME length must be 8");
+            return Parse(Input, Offset);
         }
 
         public void SetOptions(Dictionary<string, object> Options)
         {
-            throw new NotSupportedException();
+            throw new NotImplementedException();
         }
 
         public void SetOptionsFromSchema(Dictionary<string, string> Options)

@@ -7,7 +7,7 @@
         "Name": "PTR",
         "Parser": {
           "Type": 11,
-          "Target": "DNS.DnsCountName"
+          "Target": "Windows.DNS.DnsCountName"
         }
       }
     ]

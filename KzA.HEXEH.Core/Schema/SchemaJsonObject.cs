@@ -18,7 +18,6 @@
     {
         public string Name { get; set; } = string.Empty;
         public JsonParser Parser { get; set; } = new();
-        public Dictionary<string, object>? ParserConfig { get; set; }
         public uint? Expected { get; set; } = null;
     }
 
@@ -42,6 +41,7 @@
         public ValueConversion? Conversion { get; set; } = new();
         public bool BigEndian { get; set; } = false;
         public int Length { get; set; } = -1;
+        public Dictionary<string, string>? Options { get; set; }
     }
 
     internal class ValueConversion

@@ -75,8 +75,8 @@ namespace KzA.HEXEH.Test
             parser.SetOptions(new Dictionary<string, object>()
             {
                 {"LenOfLen", 1 },
-                {"ObjectType", "String" },
-                {"ObjectOptions?", stringParserOpt },
+                {"ObjectParser", "Common.String" },
+                {"ParserOptions", stringParserOpt },
             });
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
@@ -94,8 +94,8 @@ namespace KzA.HEXEH.Test
             {
                 {"LenOfLen", 4 },
                 {"ObjectCount", 0 },
-                {"ObjectType", "String" },
-                {"ObjectOptions?", stringParserOpt },
+                {"ObjectParser", "Common.String" },
+                {"ParserOptions", stringParserOpt },
             });
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
@@ -129,7 +129,7 @@ namespace KzA.HEXEH.Test
             {
                 { "LenOfCount", 1 },
                 { "LenOfObject", 4 },
-                { "ObjectType", "IPv4Addr" },
+                { "ObjectParser", "Networking.IPv4Addr" },
             });
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());

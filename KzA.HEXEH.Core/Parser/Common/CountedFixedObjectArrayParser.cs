@@ -1,5 +1,6 @@
 ﻿using KzA.HEXEH.Core.Output;
 using System.Buffers.Binary;
+using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
@@ -18,6 +19,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
         private int lenOfObject;
+        private bool isSchema = false;
         private IParser? nextParser;
 
         public Dictionary<string, Type> GetOptions()
@@ -26,8 +28,9 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 { "LenOfCount", typeof(int) },
                 { "LenOfObject", typeof(int) },
-                { "ObjectType", typeof(string) },
-                { "ObjectOptions?", typeof(Dictionary<string, object>) }
+                { "ObjectParser", typeof(string) },
+                { "IsSchema?", typeof(bool) },
+                { "ParserOptions?", typeof(Dictionary<string, object>) }
             };
         }
 
@@ -85,25 +88,37 @@ namespace KzA.HEXEH.Core.Parser.Common
 
         public void SetOptions(Dictionary<string, object> Options)
         {
-            if (Options.TryGetValue("ObjectType", out var targetTypeNameObj))
+            if (Options.TryGetValue("IsSchema", out var isSchemaObj))
             {
-                if (targetTypeNameObj is string targetTypeName)
+                if (isSchemaObj is bool _isSchema)
                 {
-                    nextParser = ParserManager.InstantiateParserByBaseName(targetTypeName);
+                    isSchema = _isSchema;
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid Option: ObjectType");
+                    throw new ArgumentException("Invalid Option: IsSchema");
+                }
+            }
+
+            if (Options.TryGetValue("ObjectParser", out var targetTypeNameObj))
+            {
+                if (targetTypeNameObj is string targetTypeName)
+                {
+                    nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: ObjectParser");
                 }
             }
             else
             {
-                throw new ArgumentException("ObjectType not provided");
+                throw new ArgumentException("ObjectParser not provided");
             }
 
             if (Options.TryGetValue("LenOfCount", out var lenOfCountObj))
             {
-                if (lenOfCountObj is int _lenOfCount) { lenOfCount = _lenOfCount; }
+                if (lenOfCountObj is int __lenOfCount) { lenOfCount = __lenOfCount; }
                 else
                 {
                     throw new ArgumentException("Invalid Option: LenOfCount");
@@ -127,7 +142,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 throw new ArgumentException("LenOfObject not provided");
             }
 
-            if (Options.TryGetValue("ObjectOptions?", out var nextParserOptionsObj))
+            if (Options.TryGetValue("ParserOptions", out var nextParserOptionsObj))
             {
                 if (nextParserOptionsObj is Dictionary<string, object> nextParserOptions)
                 {
@@ -135,7 +150,66 @@ namespace KzA.HEXEH.Core.Parser.Common
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid Option: ObjectOptions");
+                    throw new ArgumentException("Invalid Option: ParserOptions");
+                }
+            }
+        }
+
+        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        {
+            if (Options.TryGetValue("IsSchema", out var isSchemaStr))
+            {
+                if (isSchemaStr.Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    isSchema = true;
+                }
+            }
+
+            if (Options.TryGetValue("ObjectParser", out var targetTypeName))
+            {
+                nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+            }
+            else
+            {
+                throw new ArgumentException("ObjectParser not provided");
+            }
+
+            if (Options.TryGetValue("LenOfCount", out var lenOfCountStr))
+            {
+                if (int.TryParse(lenOfCountStr, out var __lenOfCount)) { lenOfCount = __lenOfCount; }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: LenOfCount");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("LenOfCount not provided");
+            }
+
+            if (Options.TryGetValue("LenOfObject", out var lenOfObjectStr))
+            {
+                if (int.TryParse(lenOfObjectStr, out var _lenOfObject)) { lenOfObject = _lenOfObject; }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: LenOfObject");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("LenOfObject not provided");
+            }
+
+            if (Options.TryGetValue("ParserOptions", out var nextParserOptionsStr))
+            {
+                var nextParserOptions = JsonSerializer.Deserialize<Dictionary<string, string>>(nextParserOptionsStr);
+                if (nextParserOptions != null)
+                {
+                    nextParser.SetOptionsFromSchema(nextParserOptions);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: ParserOptions");
                 }
             }
         }

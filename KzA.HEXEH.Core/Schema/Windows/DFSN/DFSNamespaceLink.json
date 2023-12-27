@@ -1,0 +1,52 @@
+{
+  "Name": "DFSN Link BLOB",
+  "Structure": {
+    "Fields": "Size:LinkID:TargetList:ReservedSize:Reserved:ReferralTTL",
+    "Definition": [
+      {
+        "Name": "Size",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      },
+      {
+        "Name": "LinkID",
+        "Parser": {
+          "Type": 11,
+          "Target": "Windows.DFSN.LinkID"
+        }
+      },
+      {
+        "Name": "TargetList",
+        "Parser": {
+          "Type": 11,
+          "Target": "Windows.DFSN.TargetList"
+        }
+      },
+      {
+        "Name": "ReservedSize",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD",
+          "Expected": 4
+        }
+      },
+      {
+        "Name": "Reserved",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD",
+          "Expected": 0
+        }
+      },
+      {
+        "Name": "ReferralTTL",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      }
+    ]
+  }
+}

@@ -56,5 +56,17 @@ namespace KzA.HEXEH.Core.Parser.Common
                 throw new ArgumentException("Encoding not provided");
             }
         }
+
+        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        {
+            if (Options.TryGetValue("Encoding", out var encodingObj))
+            {
+                encoding = Encoding.GetEncoding(encodingObj);
+            }
+            else
+            {
+                throw new ArgumentException("Encoding not provided");
+            }
+        }
     }
 }

@@ -28,7 +28,7 @@
         "Name": "Next2",
         "Parser": {
           "Type": 15,
-          "Target": "[Data2;0:DNS.DnsRpcRecordA;1:DNS.DnsRpcRecordCNAME]"
+          "Target": "[Data2;0:Windows.DNS.DnsRpcRecordA;1:Windows.DNS.DnsRpcRecordCNAME]"
         }
       }
     ]

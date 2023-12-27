@@ -12,6 +12,7 @@ namespace KzA.HEXEH.Core.Parser
         public ParserType Type { get; }
         public Dictionary<string, Type> GetOptions();
         public void SetOptions(Dictionary<string, object> Options);
+        public void SetOptionsFromSchema(Dictionary<string, string> Options);
     }
 
     public enum ParserType

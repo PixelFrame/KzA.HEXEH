@@ -50,11 +50,12 @@ namespace KzA.HEXEH.Core.Parser.Common
             innerParser.SetOptions(new Dictionary<string, object>()
             {
                 {"LenOfLen", lenOfLen },
-                {"ObjectType", "String" },
-                {"ObjectOptions?", stringParserOpt },
+                {"ObjectParser", "Common.String" },
+                {"ParserOptions", stringParserOpt },
             });
             var innerResult = innerParser.Parse(Input, Offset, out Read);
             innerResult.Label = "String with length specified";
+            innerResult.Value = innerResult.Children[1].Value;
             return innerResult;
         }
 
@@ -66,11 +67,12 @@ namespace KzA.HEXEH.Core.Parser.Common
             innerParser.SetOptions(new Dictionary<string, object>()
             {
                 {"LenOfLen", lenOfLen },
-                {"ObjectType", "String" },
-                {"ObjectOptions?", stringParserOpt },
+                {"ObjectParser", "Common.String" },
+                {"ParserOptions", stringParserOpt },
             });
             var innerResult = innerParser.Parse(Input, Offset, Length);
             innerResult.Label = "String with length specified";
+            innerResult.Value = innerResult.Children[1].Value;
             return innerResult;
         }
 
@@ -91,6 +93,27 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     throw new ArgumentException("Invalid Option: Encoding");
                 }
+            }
+        }
+
+        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        {
+            if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
+            {
+                if (int.TryParse(lenOfLenObj, out var _lenOfLen)) { lenOfLen = _lenOfLen; }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: LenOfLen");
+                }
+            }
+
+            if (Options.TryGetValue("Encoding", out var encodingObj))
+            {
+                encoding = Encoding.GetEncoding(encodingObj);
+            }
+            else
+            {
+                throw new ArgumentException("Encoding not provided");
             }
         }
     }

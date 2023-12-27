@@ -81,5 +81,10 @@ namespace KzA.HEXEH.Core.Parser.Networking
         {
             throw new NotSupportedException();
         }
+
+        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

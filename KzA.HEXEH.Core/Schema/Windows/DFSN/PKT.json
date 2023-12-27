@@ -1,0 +1,27 @@
+{
+  "Name": "PKT Attribute",
+  "Structure": {
+    "Fields": "BLOBVersion:BLOBElements",
+    "Definition": [
+      {
+        "Name": "BLOBVersion",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      },
+      {
+        "Name": "BLOBElements",
+        "Parser": {
+          "Type": 10,
+          "Target": "Common.CountedLengthInheritedObjectArray",
+          "Options": {
+            "LenOfCount": "4",
+            "ObjectParser": "Windows.DFSN.Element",
+            "IsSchema": "true"
+          }
+        }
+      }
+    ]
+  }
+}

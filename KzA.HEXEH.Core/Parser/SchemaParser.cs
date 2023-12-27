@@ -4,7 +4,6 @@ using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Buffers.Binary;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace KzA.HEXEH.Core.Parser
 {
@@ -70,11 +69,12 @@ namespace KzA.HEXEH.Core.Parser
                     case JsonParser.JsonParserType.NextParserSchema:
                         var nextParser = ParserManager.InstantiateParserByRelativeName(def.Parser.Target, def.Parser.Type == JsonParser.JsonParserType.NextParserSchema);
                         Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.ParserConfig != null)
+                        if (def.Parser.Options != null)
                         {
-                            nextParser.SetOptions(def.ParserConfig);
+                            nextParser.SetOptionsFromSchema(def.Parser.Options);
                         }
                         var parsed = nextParser.Parse(in Input, Index, out Read);
+                        Index += Read;
                         node.Value = parsed.Value;
                         node.Detail = parsed.Detail;
                         node.Children.AddRange(parsed.Children);
@@ -92,11 +92,12 @@ namespace KzA.HEXEH.Core.Parser
                         }
                         nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaInterpolation);
                         Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.ParserConfig != null)
+                        if (def.Parser.Options != null)
                         {
-                            nextParser.SetOptions(def.ParserConfig);
+                            nextParser.SetOptionsFromSchema(def.Parser.Options);
                         }
                         parsed = nextParser.Parse(in Input, Index, out Read);
+                        Index += Read;
                         node.Value = parsed.Value;
                         node.Detail = parsed.Detail;
                         node.Children.AddRange(parsed.Children);
@@ -114,11 +115,12 @@ namespace KzA.HEXEH.Core.Parser
                         }
                         nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaCondition);
                         Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.ParserConfig != null)
+                        if (def.Parser.Options != null)
                         {
-                            nextParser.SetOptions(def.ParserConfig);
+                            nextParser.SetOptionsFromSchema(def.Parser.Options);
                         }
                         parsed = nextParser.Parse(in Input, Index, out Read);
+                        Index += Read;
                         node.Value = parsed.Value;
                         node.Detail = parsed.Detail;
                         node.Children.AddRange(parsed.Children);
@@ -136,7 +138,10 @@ namespace KzA.HEXEH.Core.Parser
 
         public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
         {
-            throw new NotImplementedException();
+            var result = Parse(Input, Offset, out var Read);
+            if (Length != Read)
+                throw new SchemaException($"Read bytes count does not match given length", _schema.Name, "");
+            return result;
         }
 
         public void SetOptions(Dictionary<string, object> Options)
@@ -203,8 +208,7 @@ namespace KzA.HEXEH.Core.Parser
             }
             var targetType = _dynamicEnums.Where(t => t.Name == Conversion.Target).FirstOrDefault() ??
                 throw new SchemaException($"Target type \"{Conversion.Target}\" not defined", _schema.Name, "");
-            Node.Value = value.ToString();
-            Node.DisplayValue = Enum.ToObject(targetType, value).ToString() ??
+            Node.Value = Enum.ToObject(targetType, value).ToString() ??
                 $"{value} (0x{value:X})";
         }
 
@@ -226,7 +230,12 @@ namespace KzA.HEXEH.Core.Parser
         [GeneratedRegex(@"{(\w+)}")]
         private static partial Regex ParserInterpolationRegex();
 
-        [GeneratedRegex(@"\[(?<key>\w+);((?<case>\w*):(?<value>[\w\.]+);?)+\]")]
+        [GeneratedRegex(@"\[(?<key>\w+);((?<case>.*?):(?<value>[\w\.]+);?)+\]")]
         private static partial Regex ParserConditionRegex();
+
+        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

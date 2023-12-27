@@ -83,7 +83,7 @@
         "Name": "Data",
         "Parser": {
           "Type": 13,
-          "Target": "DNS.DnsRpcRecord{Type}"
+          "Target": "Windows.DNS.DnsRpcRecord{Type}"
         }
       }
     ]

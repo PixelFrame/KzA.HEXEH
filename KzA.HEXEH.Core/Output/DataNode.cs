@@ -69,7 +69,7 @@ namespace KzA.HEXEH.Core.Output
                 sbResult.Append(@"├─");
                 indent += "│ ";
             }
-            sbResult.AppendLine($"{Label}: {Value}");
+            sbResult.AppendLine($"{Label}: {DisplayValue}");
             if (isVerbose && Detail.Count > 0)
             {
                 var addExtraIndent = Children.Count > 0;

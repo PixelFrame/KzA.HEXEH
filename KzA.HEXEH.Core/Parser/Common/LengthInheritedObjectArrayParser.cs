@@ -4,19 +4,10 @@ using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class LengthedObjectParser : IParser
+    public class LengthInheritedObjectArrayParser : IParser
     {
         public ParserType Type => ParserType.Hardcoded;
-        private int _lenOfLen;
-        private int lenOfLen
-        {
-            get => _lenOfLen;
-            set
-            {
-                if (!Global.ValidLengthNumberLen.Contains(value)) throw new ArgumentException("Invalid Option: LenOfLen should be one of the following values {1,2,4}");
-                _lenOfLen = value;
-            }
-        }
+        private int objectCount;
         private bool isSchema = false;
         private IParser? nextParser;
 
@@ -24,7 +15,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         {
             return new Dictionary<string, Type>()
             {
-                { "LenOfLen", typeof(int) },
+                { "ObjectCount", typeof(int) },
                 { "ObjectParser", typeof(string) },
                 { "IsSchema?", typeof(bool) },
                 { "ParserOptions?", typeof(Dictionary<string, object>) }
@@ -47,21 +38,22 @@ namespace KzA.HEXEH.Core.Parser.Common
         public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
         {
             if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
-            int len = 0;
-            switch (lenOfLen)
-            {
-                case 1: len = Input[Offset]; break;
-                case 2: len = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                case 4: len = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
-            }
-            var children = nextParser.Parse(Input, Offset + lenOfLen, len);
+
             var head = new DataNode()
             {
-                Label = "Object with length specified",
+                Label = "Array of objects with length inherited",
             };
-            head.Children.Add(new DataNode("Length", len.ToString()));
-            head.Children.Add(children);
-            Read = len + lenOfLen;
+            var start = Offset;
+
+            if (objectCount > 0)
+            {
+                for (var i = 0; i < objectCount; i++)
+                {
+                    head.Children.Add(nextParser.Parse(Input, Offset, out int currentObjLen));
+                    Offset += currentObjLen;
+                }
+            }
+            Read = Offset - start;
             return head;
         }
 
@@ -70,7 +62,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             var res = Parse(in Input, Offset, out int read);
             if (read != Length)
             {
-                throw new ArgumentException("Data length does not match");
+                throw new ArgumentException("Given length does not match actual object array length");
             }
             return res;
         }
@@ -105,20 +97,20 @@ namespace KzA.HEXEH.Core.Parser.Common
                 throw new ArgumentException("ObjectParser not provided");
             }
 
-            if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
+            if (Options.TryGetValue("ObjectCount", out var objectCountObj))
             {
-                if (lenOfLenObj is int _lenOfLen) { lenOfLen = _lenOfLen; }
+                if (objectCountObj is int _objectCount) { objectCount = _objectCount; }
                 else
                 {
-                    throw new ArgumentException("Invalid Option: LenOfLen");
+                    throw new ArgumentException("Invalid Option: ObjectCount");
                 }
             }
             else
             {
-                throw new ArgumentException("LenOfLen not provided");
+                objectCount = 0;
             }
 
-            if (Options.TryGetValue("ParserOptions", out var nextParserOptionsObj))
+            if (Options.TryGetValue("ParserOptions?", out var nextParserOptionsObj))
             {
                 if (nextParserOptionsObj is Dictionary<string, object> nextParserOptions)
                 {
@@ -150,17 +142,17 @@ namespace KzA.HEXEH.Core.Parser.Common
                 throw new ArgumentException("ObjectParser not provided");
             }
 
-            if (Options.TryGetValue("LenOfLen", out var lenOfLenStr))
+            if (Options.TryGetValue("ObjectCount", out var objectCountStr))
             {
-                if (int.TryParse(lenOfLenStr, out var __lenOfLen)) { lenOfLen = __lenOfLen; }
+                if (int.TryParse(objectCountStr, out var _objectCount)) { objectCount = _objectCount; }
                 else
                 {
-                    throw new ArgumentException("Invalid Option: LenOfLen");
+                    throw new ArgumentException("Invalid Option: ObjectCount");
                 }
             }
             else
             {
-                throw new ArgumentException("LenOfLen not provided");
+                objectCount = 0;
             }
 
             if (Options.TryGetValue("ParserOptions", out var nextParserOptionsStr))
