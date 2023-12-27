@@ -18,7 +18,7 @@
     {
         public string Name { get; set; } = string.Empty;
         public JsonParser Parser { get; set; } = new();
-        public uint? Expected { get; set; } = null;
+        public ulong? Expected { get; set; } = null;
     }
 
     internal class JsonParser
@@ -29,10 +29,6 @@
             BasicConvert = 1,
             NextParserBuiltin = 10,
             NextParserSchema = 11,
-            NextParserBuiltinInterpolation = 12,
-            NextParserSchemaInterpolation = 13,
-            NextParserBuiltinCondition = 14,
-            NextParserSchemaCondition = 15,
             PsScript = 20,
         }
 

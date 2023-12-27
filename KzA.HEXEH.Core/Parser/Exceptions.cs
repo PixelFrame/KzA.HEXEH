@@ -25,4 +25,8 @@ namespace KzA.HEXEH.Core.Parser
     internal class ParseLengthMismatchException(string Message, string ParseStackPrint, int Index, Exception? InnerException) : ParseException(Message, ParseStackPrint, Index, InnerException)
     {
     }
+
+    internal class ParseUnexpectedValueException(string Message, string ParseStackPrint, int Index) : ParseException(Message, ParseStackPrint, Index, null) 
+    {
+    }
 }
