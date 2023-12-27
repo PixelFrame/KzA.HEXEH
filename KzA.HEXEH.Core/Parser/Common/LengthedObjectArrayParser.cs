@@ -1,12 +1,13 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Buffers.Binary;
 using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class LengthedObjectArrayParser : IParser
+    public class LengthedObjectArrayParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
         private int _lenOfLen;
         private int lenOfLen
         {
@@ -21,7 +22,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         private bool isSchema = false;
         private IParser? nextParser;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return new Dictionary<string, Type>()
             {
@@ -33,82 +34,108 @@ namespace KzA.HEXEH.Core.Parser.Common
             };
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, Input.Length);
+            return Parse(Input, 0, Input.Length, ParseStack);
         }
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
         }
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
-
-            var head = new DataNode()
+            Log.Debug("[LengthedObjectArrayParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                Label = "Array of objects with length specified",
-            };
-            var start = Offset;
-            int currentObjLen = 0;
+                if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
 
-            if (objectCount > 0)
-            {
-                for (var i = 0; i < objectCount; i++)
+                var head = new DataNode()
                 {
-                    switch (lenOfLen)
-                    {
-                        case 1: currentObjLen = Input[Offset]; break;
-                        case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                        case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
-                    }
-                    Offset += lenOfLen;
-                    head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
-                    head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen));
-                    Offset += currentObjLen;
-                }
-            }
-            else
-            {
-                var loopCnt = 0;
-                while (Offset < Input.Length)
+                    Label = "Array of objects with length specified",
+                };
+                var start = Offset;
+                int currentObjLen = 0;
+
+                if (objectCount > 0)
                 {
-                    switch (lenOfLen)
+                    for (var i = 0; i < objectCount; i++)
                     {
-                        case 1: currentObjLen = Input[Offset]; break;
-                        case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                        case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
-                    }
-                    Offset += lenOfLen;
-                    head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
-                    head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen));
-                    Offset += currentObjLen;
-                    if (++loopCnt > Global.LoopMax)
-                    {
-                        throw new StackOverflowException("Array loop exceeds limitation, please verify if data is valid or adjust the limitation");
+                        switch (lenOfLen)
+                        {
+                            case 1: currentObjLen = Input[Offset]; break;
+                            case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                            case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                        }
+                        Offset += lenOfLen;
+                        head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
+                        head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen, ParseStack));
+                        Offset += currentObjLen;
                     }
                 }
+                else
+                {
+                    var loopCnt = 0;
+                    while (Offset < Input.Length)
+                    {
+                        switch (lenOfLen)
+                        {
+                            case 1: currentObjLen = Input[Offset]; break;
+                            case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                            case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                        }
+                        Offset += lenOfLen;
+                        head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
+                        head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen, ParseStack));
+                        Offset += currentObjLen;
+                        if (++loopCnt > Global.LoopMax)
+                        {
+                            throw new StackOverflowException("Array loop exceeds limitation, please verify if data is valid or adjust the limitation");
+                        }
+                    }
+                }
+                Read = Offset - start;
+                Log.Debug("[LengthedObjectArrayParser] Parsed {Read} bytes", Read);
+                ParseStack!.PopEx();
+                return head;
             }
-            Read = Offset - start;
-            return head;
+            catch (ParseException e)
+            {
+                throw new ParseFailureException("Failed to parse inner object", e.ParserStackPrint, Offset, e);
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse inner object", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
+            var res = Parse(in Input, Offset, out int read, ParseStack);
+            if (read < Length)
             {
-                throw new ArgumentException("Given length does not match actual object array length");
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                Log.Error("[LengthedObjectArrayParser] Actual object array length exceeding given length");
+                ParseStack!.Push(GetType().FullName ?? GetType().Name);
+                throw new ParseLengthMismatchException("Actual object array length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
             return res;
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaObj))
             {
@@ -177,7 +204,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaStr))
             {

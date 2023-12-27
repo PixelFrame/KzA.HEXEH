@@ -1,11 +1,12 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Text;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class LengthedStringParser : IParser
+    public class LengthedStringParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
         private static readonly int[] validLen = { 1, 2, 4, 8 };
         private int _lenOfLen;
         private int lenOfLen
@@ -19,7 +20,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         }
         private Encoding encoding = Encoding.UTF8;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return new Dictionary<string, Type>()
             {
@@ -28,55 +29,85 @@ namespace KzA.HEXEH.Core.Parser.Common
             };
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, Input.Length);
+            return Parse(Input, 0, Input.Length, ParseStack);
         }
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
-        }
-
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
-        {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            var innerParser = new LengthedObjectParser();
-            var stringParserOpt = new Dictionary<string, object>()
-            { {"Encoding", encoding } };
-            innerParser.SetOptions(new Dictionary<string, object>()
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
+        }
+
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
+        {
+            Log.Debug("[LengthedStringParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                {"LenOfLen", lenOfLen },
-                {"ObjectParser", "Common.String" },
-                {"ParserOptions", stringParserOpt },
-            });
-            var innerResult = innerParser.Parse(Input, Offset, out Read);
-            innerResult.Label = "String with length specified";
-            innerResult.Value = innerResult.Children[1].Value;
-            return innerResult;
-        }
-
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
-        {
-            var innerParser = new LengthedObjectParser();
-            var stringParserOpt = new Dictionary<string, object>()
-            { {"Encoding", encoding } };
-            innerParser.SetOptions(new Dictionary<string, object>()
+                var innerParser = new LengthedObjectParser();
+                var stringParserOpt = new Dictionary<string, object>()
+                { {"Encoding", encoding } };
+                innerParser.SetOptions(new Dictionary<string, object>()
+                {
+                    {"LenOfLen", lenOfLen },
+                    {"ObjectParser", "Common.String" },
+                    {"ParserOptions", stringParserOpt },
+                });
+                var innerResult = innerParser.Parse(Input, Offset, out Read, ParseStack);
+                innerResult.Label = "String with length specified";
+                innerResult.Value = innerResult.Children[1].Value;
+                Log.Debug("[LengthedStringParser] Parsed {Read} bytes", Read);
+                ParseStack!.PopEx();
+                return innerResult;
+            }
+            catch (ParseException e)
             {
-                {"LenOfLen", lenOfLen },
-                {"ObjectParser", "Common.String" },
-                {"ParserOptions", stringParserOpt },
-            });
-            var innerResult = innerParser.Parse(Input, Offset, Length);
-            innerResult.Label = "String with length specified";
-            innerResult.Value = innerResult.Children[1].Value;
-            return innerResult;
+                throw new ParseFailureException("Failed to parse", e.ParserStackPrint, Offset, e);
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
+        {
+            Log.Debug("[LengthedStringParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
+            {
+                var innerParser = new LengthedObjectParser();
+                var stringParserOpt = new Dictionary<string, object>()
+                { {"Encoding", encoding } };
+                innerParser.SetOptions(new Dictionary<string, object>()
+                {
+                    {"LenOfLen", lenOfLen },
+                    {"ObjectParser", "Common.String" },
+                    {"ParserOptions", stringParserOpt },
+                });
+                var innerResult = innerParser.Parse(Input, Offset, Length, ParseStack);
+                innerResult.Label = "String with length specified";
+                innerResult.Value = innerResult.Children[1].Value;
+                Log.Debug("[LengthedStringParser] Parsed {Length} bytes", Length);
+                ParseStack!.PopEx();
+                return innerResult;
+            }
+            catch (ParseException e)
+            {
+                throw new ParseFailureException("Failed to parse", e.ParserStackPrint, Offset, e);
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse", ParseStack!.Dump(), Offset, e);
+            }
+        }
+
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
             {
@@ -96,7 +127,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
             if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
             {

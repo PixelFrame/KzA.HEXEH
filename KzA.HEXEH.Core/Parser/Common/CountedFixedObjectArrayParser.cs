@@ -1,12 +1,13 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Buffers.Binary;
 using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class CountedFixedObjectArrayParser : IParser
+    public class CountedFixedObjectArrayParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
 
         private int _lenOfCount;
         private int lenOfCount
@@ -22,7 +23,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         private bool isSchema = false;
         private IParser? nextParser;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return new Dictionary<string, Type>()
             {
@@ -34,59 +35,86 @@ namespace KzA.HEXEH.Core.Parser.Common
             };
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, Input.Length);
+            return Parse(Input, 0, Input.Length, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
-            int count = 0;
-            switch (lenOfCount)
+            Log.Debug("[CountedFixedObjectArrayParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                case 1: count = Input[Offset]; break;
-                case 2: count = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                case 4: count = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
+                int count = 0;
+                switch (lenOfCount)
+                {
+                    case 1: count = Input[Offset]; break;
+                    case 2: count = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                    case 4: count = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                }
+
+                var head = new DataNode()
+                {
+                    Label = "Array of fixed size objects",
+                };
+                head.Children.Add(new DataNode("Count", count.ToString()));
+                head.Children.Add(new DataNode("Object Length", lenOfObject.ToString()));
+                Read = (lenOfObject * count) + lenOfCount;
+                Offset += lenOfCount;
+                for (; count > 0; count--)
+                {
+                    Log.Debug("[CountedFixedObjectArrayParser] Calling next parser {nextParserName}", nextParser.GetType().FullName);
+                    head.Children.Add(nextParser.Parse(Input, Offset, lenOfObject, ParseStack));
+                    Offset += lenOfObject;
+                }
+                Log.Debug("[CountedFixedObjectArrayParser] Parsed {Read} bytes", Read);
+
+                ParseStack!.PopEx();
+                return head;
             }
-
-            var head = new DataNode()
+            catch (ParseException e)
             {
-                Label = "Array of fixed size objects",
-            };
-            head.Children.Add(new DataNode("Count", count.ToString()));
-            head.Children.Add(new DataNode("Object Length", lenOfObject.ToString()));
-            Read = (lenOfObject * count) + lenOfCount;
-            Offset += lenOfCount;
-            for (; count > 0; count--)
-            {
-                head.Children.Add(nextParser.Parse(Input, Offset, lenOfObject));
-                Offset += lenOfObject;
+                throw new ParseFailureException("Failed to parse inner object", e.ParserStackPrint, Offset, e);
             }
-            return head;
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse inner object", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
+            var res = Parse(in Input, Offset, out int read, ParseStack);
+            if (read < Length)
             {
-                throw new ArgumentException("Data length does not match");
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                ParseStack!.Push(GetType().FullName ?? GetType().Name);
+                throw new ParseLengthMismatchException("Actual object array length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
             return res;
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaObj))
             {
@@ -155,7 +183,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaStr))
             {

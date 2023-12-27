@@ -50,12 +50,12 @@ namespace KzA.HEXEH.Core.Output
         public override string ToString()
         {
             var sbResult = new StringBuilder();
-            PrintNode("", true, true, false, ref sbResult);
+            PrintNode("", true, true, false, sbResult);
 
             return sbResult.ToString();
         }
 
-        private void PrintNode(string indent, bool root, bool last, bool isVerbose, ref StringBuilder sbResult)
+        private void PrintNode(string indent, bool root, bool last, bool isVerbose, StringBuilder sbResult)
         {
             sbResult.Append(indent);
             if (root) { }
@@ -83,12 +83,12 @@ namespace KzA.HEXEH.Core.Output
                 }
             }
             for (int i = 0; i < Children.Count; i++)
-                Children[i].PrintNode(indent, false, i == Children.Count - 1, isVerbose, ref sbResult);
+                Children[i].PrintNode(indent, false, i == Children.Count - 1, isVerbose, sbResult);
         }
         public string ToStringVerbose()
         {
             var sbResult = new StringBuilder();
-            PrintNode("", true, true, true, ref sbResult);
+            PrintNode("", true, true, true, sbResult);
 
             return sbResult.ToString();
         }

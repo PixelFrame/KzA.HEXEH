@@ -13,7 +13,7 @@ namespace KzA.HEXEH.Test
         {
             var data = new byte[] { 0x03, 0x61, 0x62, 0x63, 0x07, 0x63, 0x6F, 0x6E, 0x74, 0x6F, 0x73, 0x6F, 0x03, 0x63, 0x6F, 0x6D, 0x00 };
             var parser = new FqdnParser();
-            var result = parser.Parse(data);
+            var result = parser.Parse(data, null);
             Output.WriteLine(result.ToStringVerbose());
         }
 
@@ -22,7 +22,7 @@ namespace KzA.HEXEH.Test
         {
             var data = new byte[] { 0xa0, 0xb0, 0xc0, 0xd0 };
             var parser = new IPv4AddrParser();
-            var result = parser.Parse(data);
+            var result = parser.Parse(data, null);
             Output.WriteLine(result.ToStringVerbose());
         }
 

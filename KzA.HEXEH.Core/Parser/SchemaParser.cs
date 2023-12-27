@@ -7,146 +7,175 @@ using System.Text.RegularExpressions;
 
 namespace KzA.HEXEH.Core.Parser
 {
-    public abstract partial class SchemaParser : IParser
+    public abstract partial class SchemaParser : ParserBase
     {
-        public ParserType Type => ParserType.SchemaInternal;
+        public override ParserType Type => ParserType.SchemaInternal;
         private SchemaJsonObject _schema;
         private IEnumerable<Type> _dynamicEnums;
         private readonly string[] ValidBaseTypes = ["BYTE", "WORD", "DWORD", "QWORD"];
+        private string _actualTypeName;
 
         public SchemaParser()
         {
-            var typeName = GetType().Name;
-            Log.Debug("Creating Dynamic Parser Instance {typeName}", typeName);
+            _actualTypeName = GetType().FullName!;
+            Log.Debug("[{_actualTypeName}] Creating Schema Parser Instance {_actualTypeName}", _actualTypeName);
             _schema = SchemaProcessor.LoadSchema(GetType());
             _dynamicEnums = SchemaProcessor.CreateEnums(_schema);
         }
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return [];
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, out _);
+            return Parse(Input, 0, out _, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out _);
+            return Parse(Input, 0, out _, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            var Index = Offset;
-            var head = new DataNode()
+            Log.Debug("[{_actualTypeName}] Start parsing from {Offset}", _actualTypeName, Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                Label = _schema.Name,
-            };
-            var fieldNames = _schema.Structure.Fields.Split(":");
-            foreach (var field in fieldNames)
-            {
-                var def = _schema.Structure.Definition.Where(d => d.Name == field).FirstOrDefault() ??
-                    throw new SchemaException("Missing Field Definition", _schema.Name, field);
-                var node = new DataNode()
+                var Index = Offset;
+                var head = new DataNode()
                 {
-                    Label = field
+                    Label = _schema.Name,
                 };
-                switch (def.Parser.Type)
+                var fieldNames = _schema.Structure.Fields.Split(":");
+                foreach (var field in fieldNames)
                 {
-                    case JsonParser.JsonParserType.Basic:
-                        ParseBasic(ref node, def.Parser.Target, Input, ref Index, def.Parser.BigEndian); break;
-                    case JsonParser.JsonParserType.BasicConvert:
-                        if (def.Parser.Conversion == null) throw new SchemaException($"No conversion provided", _schema.Name, field);
-                        ParseBasicConvert(ref node, def.Parser.Target, Input, ref Index, def.Parser.Conversion, def.Parser.BigEndian); break;
-                    case JsonParser.JsonParserType.NextParserBuiltin:
-                    case JsonParser.JsonParserType.NextParserSchema:
-                        var nextParser = ParserManager.InstantiateParserByRelativeName(def.Parser.Target, def.Parser.Type == JsonParser.JsonParserType.NextParserSchema);
-                        Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.Parser.Options != null)
-                        {
-                            nextParser.SetOptionsFromSchema(def.Parser.Options);
-                        }
-                        var parsed = nextParser.Parse(in Input, Index, out Read);
-                        Index += Read;
-                        node.Value = parsed.Value;
-                        node.Detail = parsed.Detail;
-                        node.Children.AddRange(parsed.Children);
-                        break;
-                    case JsonParser.JsonParserType.NextParserBuiltinInterpolation:
-                    case JsonParser.JsonParserType.NextParserSchemaInterpolation:
-                        var nextParserName = def.Parser.Target;
-                        try
-                        {
-                            nextParserName = ParserInterpolationRegex().Replace(nextParserName, m => head.Children.Where(n => n.Label == m.Groups[1].Value).First().Value);
-                        }
-                        catch (Exception e)
-                        {
-                            throw new SchemaException($"Unable to create conditional parser {nextParserName}", _schema.Name, field, e);
-                        }
-                        nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaInterpolation);
-                        Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.Parser.Options != null)
-                        {
-                            nextParser.SetOptionsFromSchema(def.Parser.Options);
-                        }
-                        parsed = nextParser.Parse(in Input, Index, out Read);
-                        Index += Read;
-                        node.Value = parsed.Value;
-                        node.Detail = parsed.Detail;
-                        node.Children.AddRange(parsed.Children);
-                        break;
-                    case JsonParser.JsonParserType.NextParserBuiltinCondition:
-                    case JsonParser.JsonParserType.NextParserSchemaCondition:
-                        nextParserName = def.Parser.Target;
-                        try
-                        {
-                            nextParserName = ParserConditionRegex().Replace(nextParserName, m => ParserConditionReplacement(m, head.Children, field));
-                        }
-                        catch (Exception e)
-                        {
-                            throw new SchemaException($"Unable to create conditional parser {nextParserName}", _schema.Name, field, e);
-                        }
-                        nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaCondition);
-                        Log.Debug("Calling parser {nextParser} from {parentParser}", nextParser.GetType().FullName, this.GetType().FullName);
-                        if (def.Parser.Options != null)
-                        {
-                            nextParser.SetOptionsFromSchema(def.Parser.Options);
-                        }
-                        parsed = nextParser.Parse(in Input, Index, out Read);
-                        Index += Read;
-                        node.Value = parsed.Value;
-                        node.Detail = parsed.Detail;
-                        node.Children.AddRange(parsed.Children);
-                        break;
-                    case JsonParser.JsonParserType.PsScript:
-                        node.Value = PsScriptRunner.RunScriptForStringResult(def.Parser.Target, Input.Slice(Index, def.Parser.Length).ToArray());
-                        Index += def.Parser.Length;
-                        break;
+                    var def = _schema.Structure.Definition.Where(d => d.Name == field).FirstOrDefault() ??
+                        throw new SchemaException("Missing Field Definition", _schema.Name, field);
+                    var node = new DataNode()
+                    {
+                        Label = field
+                    };
+                    switch (def.Parser.Type)
+                    {
+                        case JsonParser.JsonParserType.Basic:
+                            ParseBasic(node, def.Parser.Target, Input, ref Index, def.Parser.BigEndian); break;
+                        case JsonParser.JsonParserType.BasicConvert:
+                            if (def.Parser.Conversion == null) throw new SchemaException($"No conversion provided", _schema.Name, field);
+                            ParseBasicConvert(node, def.Parser.Target, Input, ref Index, def.Parser.Conversion, def.Parser.BigEndian); break;
+                        case JsonParser.JsonParserType.NextParserBuiltin:
+                        case JsonParser.JsonParserType.NextParserSchema:
+                            var nextParser = ParserManager.InstantiateParserByRelativeName(def.Parser.Target, def.Parser.Type == JsonParser.JsonParserType.NextParserSchema);
+                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                            if (def.Parser.Options != null)
+                            {
+                                nextParser.SetOptionsFromSchema(def.Parser.Options);
+                            }
+                            var parsed = nextParser.Parse(in Input, Index, out Read, ParseStack);
+                            Index += Read;
+                            node.Value = parsed.Value;
+                            node.Detail = parsed.Detail;
+                            node.Children.AddRange(parsed.Children);
+                            break;
+                        case JsonParser.JsonParserType.NextParserBuiltinInterpolation:
+                        case JsonParser.JsonParserType.NextParserSchemaInterpolation:
+                            var nextParserName = def.Parser.Target;
+                            try
+                            {
+                                nextParserName = ParserInterpolationRegex().Replace(nextParserName, m => head.Children.Where(n => n.Label == m.Groups[1].Value).First().Value);
+                            }
+                            catch (Exception e)
+                            {
+                                throw new SchemaException($"Unable to create conditional parser {nextParserName}", _schema.Name, field, e);
+                            }
+                            nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaInterpolation);
+                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                            if (def.Parser.Options != null)
+                            {
+                                nextParser.SetOptionsFromSchema(def.Parser.Options);
+                            }
+                            parsed = nextParser.Parse(in Input, Index, out Read, ParseStack);
+                            Index += Read;
+                            node.Value = parsed.Value;
+                            node.Detail = parsed.Detail;
+                            node.Children.AddRange(parsed.Children);
+                            break;
+                        case JsonParser.JsonParserType.NextParserBuiltinCondition:
+                        case JsonParser.JsonParserType.NextParserSchemaCondition:
+                            nextParserName = def.Parser.Target;
+                            try
+                            {
+                                nextParserName = ParserConditionRegex().Replace(nextParserName, m => ParserConditionReplacement(m, head.Children, field));
+                            }
+                            catch (Exception e)
+                            {
+                                throw new SchemaException($"Unable to create conditional parser {nextParserName}", _schema.Name, field, e);
+                            }
+                            nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchemaCondition);
+                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                            if (def.Parser.Options != null)
+                            {
+                                nextParser.SetOptionsFromSchema(def.Parser.Options);
+                            }
+                            parsed = nextParser.Parse(in Input, Index, out Read, ParseStack);
+                            Index += Read;
+                            node.Value = parsed.Value;
+                            node.Detail = parsed.Detail;
+                            node.Children.AddRange(parsed.Children);
+                            break;
+                        case JsonParser.JsonParserType.PsScript:
+                            node.Value = PsScriptRunner.RunScriptForStringResult(def.Parser.Target, Input.Slice(Index, def.Parser.Length).ToArray());
+                            Index += def.Parser.Length;
+                            break;
+                    }
+                    head.Children.Add(node);
                 }
-                head.Children.Add(node);
+                Read = Index - Offset;
+                Log.Debug("[{_actualTypeName}] Parsed {Read} bytes", _actualTypeName, Read);
+                ParseStack!.PopEx();
+                return head;
             }
-            Read = Index - Offset;
-            return head;
+            catch (ParseException e)
+            {
+                throw new ParseFailureException("Failed to parse inner object", e.ParserStackPrint, Offset, e);
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
-            var result = Parse(Input, Offset, out var Read);
-            if (Length != Read)
-                throw new SchemaException($"Read bytes count does not match given length", _schema.Name, "");
-            return result;
+            var res = Parse(Input, Offset, out var read, ParseStack);
+            if (read < Length)
+            {
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                Log.Error("[{_actualTypeName}] Actual object length exceeding given length", _actualTypeName);
+                ParseStack!.Push(_actualTypeName);
+                throw new ParseLengthMismatchException("Actual object length exceeding given length", ParseStack!.Dump(), Offset, null);
+            }
+            return res;
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         private void SetSchema(SchemaJsonObject SchemaObj, IEnumerable<Type> DynamicEnums)
@@ -155,7 +184,7 @@ namespace KzA.HEXEH.Core.Parser
             _dynamicEnums = DynamicEnums;
         }
 
-        private void ParseBasic(ref DataNode Node, string TypeName, in ReadOnlySpan<byte> Input, ref int Index, bool BigEndian)
+        private void ParseBasic(DataNode Node, string TypeName, in ReadOnlySpan<byte> Input, ref int Index, bool BigEndian)
         {
             switch (TypeName)
             {
@@ -186,7 +215,7 @@ namespace KzA.HEXEH.Core.Parser
             throw new SchemaException($"No such type {TypeName}", _schema.Name, "");
         }
 
-        private void ParseBasicConvert(ref DataNode Node, string TypeName, in ReadOnlySpan<byte> Input, ref int Index, ValueConversion Conversion, bool BigEndian)
+        private void ParseBasicConvert(DataNode Node, string TypeName, in ReadOnlySpan<byte> Input, ref int Index, ValueConversion Conversion, bool BigEndian)
         {
             ulong value = 0;
             switch (TypeName)
@@ -233,9 +262,9 @@ namespace KzA.HEXEH.Core.Parser
         [GeneratedRegex(@"\[(?<key>\w+);((?<case>.*?):(?<value>[\w\.]+);?)+\]")]
         private static partial Regex ParserConditionRegex();
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

@@ -1,12 +1,13 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Buffers.Binary;
 using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class LengthedObjectParser : IParser
+    public class LengthedObjectParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
         private int _lenOfLen;
         private int lenOfLen
         {
@@ -20,7 +21,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         private bool isSchema = false;
         private IParser? nextParser;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return new Dictionary<string, Type>()
             {
@@ -31,51 +32,77 @@ namespace KzA.HEXEH.Core.Parser.Common
             };
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, Input.Length);
+            return Parse(Input, 0, Input.Length, ParseStack);
         }
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
         }
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
-            int len = 0;
-            switch (lenOfLen)
+            Log.Debug("[LengthedObjectParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                case 1: len = Input[Offset]; break;
-                case 2: len = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                case 4: len = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                if (nextParser == null) { throw new InvalidOperationException("ObjectType not set"); }
+                int len = 0;
+                switch (lenOfLen)
+                {
+                    case 1: len = Input[Offset]; break;
+                    case 2: len = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                    case 4: len = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                }
+                var children = nextParser.Parse(Input, Offset + lenOfLen, len, ParseStack);
+                var head = new DataNode()
+                {
+                    Label = "Object with length specified",
+                };
+                head.Children.Add(new DataNode("Length", len.ToString()));
+                head.Children.Add(children);
+                Read = len + lenOfLen;
+                Log.Debug("[LengthedObjectParser] Parsed {Read} bytes", Read);
+                ParseStack!.PopEx();
+                return head;
             }
-            var children = nextParser.Parse(Input, Offset + lenOfLen, len);
-            var head = new DataNode()
+            catch (ParseException e)
             {
-                Label = "Object with length specified",
-            };
-            head.Children.Add(new DataNode("Length", len.ToString()));
-            head.Children.Add(children);
-            Read = len + lenOfLen;
-            return head;
+                throw new ParseFailureException("Failed to parse inner object", e.ParserStackPrint, Offset, e);
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse inner object", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
+            var res = Parse(in Input, Offset, out int read, ParseStack);
+            if (read < Length)
             {
-                throw new ArgumentException("Data length does not match");
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                Log.Error("[LengthedObjectParser] Actual object length exceeding given length");
+                ParseStack!.Push(GetType().FullName ?? GetType().Name);
+                throw new ParseLengthMismatchException("Actual object length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
             return res;
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaObj))
             {
@@ -131,7 +158,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
             if (Options.TryGetValue("IsSchema", out var isSchemaStr))
             {

@@ -1,0 +1,32 @@
+﻿using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace KzA.HEXEH.Core.Output
+{
+    internal static class StackExtension
+    {
+        internal static string Dump<T>(this Stack<T>? Stack)
+        {
+            if (Stack == null) return string.Empty;
+            var sb = new StringBuilder();
+            var depth = 0;
+            var intend = "  ";
+            while(Stack.Count > 0)
+            {
+                sb.Append(string.Concat(Enumerable.Repeat(intend, depth++)));
+                sb.AppendLine(Stack.Pop()?.ToString());
+            }
+            return sb.ToString();
+        }
+
+        internal static T PopEx<T>(this Stack<T> Stack)
+        {
+            Log.Verbose($"Current stack:{Environment.NewLine}{{Stack}}", (new Stack<T>(Stack.ToArray())).Dump());
+            return Stack.Pop();
+        }
+    }
+}

@@ -1,90 +1,107 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Text;
 
 namespace KzA.HEXEH.Core.Parser.Networking
 {
-    public class FqdnParser : IParser
+    public class FqdnParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, Input.Length);
+            return Parse(Input, 0, Input.Length, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            var start = Offset;
-            var nullReached = false;
-            var readLen = true;
-            var len = 0;
-            var sb = new StringBuilder();
-            var loopCnt = 0;
-            while (!nullReached)
+            Log.Debug("[FqdnParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                if (readLen)
+                var start = Offset;
+                var nullReached = false;
+                var readLen = true;
+                var len = 0;
+                var sb = new StringBuilder();
+                var loopCnt = 0;
+                while (!nullReached)
                 {
-                    readLen = false;
-                    len = Input[Offset];
-                    sb.Append($"({len})");
-                    Offset++;
-                    if (len == 0) { nullReached = true; }
+                    if (readLen)
+                    {
+                        readLen = false;
+                        len = Input[Offset];
+                        sb.Append($"({len})");
+                        Offset++;
+                        if (len == 0) { nullReached = true; }
+                    }
+                    else
+                    {
+                        readLen = true;
+                        sb.Append(Encoding.ASCII.GetString(Input.Slice(Offset, len).ToArray()));
+                        Offset += len;
+                    }
+                    if (++loopCnt > Global.LoopMax)
+                    {
+                        throw new StackOverflowException("Array loop exceeds limitation, please verify if data is valid or adjust the limitation");
+                    }
                 }
-                else
-                {
-                    readLen = true;
-                    sb.Append(Encoding.ASCII.GetString(Input.Slice(Offset, len).ToArray()));
-                    Offset += len;
-                }
-                if (++loopCnt > Global.LoopMax)
-                {
-                    throw new StackOverflowException("Array loop exceeds limitation, please verify if data is valid or adjust the limitation");
-                }
+                var result = new DataNode("FQDN", sb.ToString());
+                Read = Offset - start;
+                Log.Debug("[FqdnParser] Parsed {Read} bytes", Read);
+                ParseStack!.PopEx();
+                return result;
             }
-            var result = new DataNode("FQDN", sb.ToString());
-            Read = Offset - start;
-            return result;
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
-            if (Length > 255) { throw new ArgumentException("FQDN data length must be less than 255"); }
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
+            var res = Parse(in Input, Offset, out int read, ParseStack);
+            if (read < Length)
             {
-                throw new ArgumentException("Given length does not match actual FQDN length");
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                Log.Error("[FqdnParser] Actual FQDN length exceeding given length");
+                ParseStack!.Push(GetType().FullName ?? GetType().Name);
+                throw new ParseLengthMismatchException("Actual FQDN length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
             return res;
         }
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return [];
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             throw new NotSupportedException();
         }
 
-        public void SetSchema(string Schema)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
             throw new NotSupportedException();
-        }
-
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
-        {
-            throw new NotImplementedException();
         }
     }
 }

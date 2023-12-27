@@ -28,7 +28,7 @@ namespace KzA.HEXEH.Core.Utility
             ps.Runspace = rs;
             rs.Open();
             var funcScript = PsFuncHeader + Script + PsFuncFooter;
-            Log.Debug($"PsScriptConvert function{Environment.NewLine}{{funcScript}}", funcScript);
+            Log.Debug($"[PsScriptRunner] PsScriptConvert function{Environment.NewLine}{{funcScript}}", funcScript);
             ps.AddScript(funcScript).AddStatement().AddCommand("PsScriptConvert").AddArgument(Value);
             var result = ps.Invoke<string>();
             if (ps.HadErrors)

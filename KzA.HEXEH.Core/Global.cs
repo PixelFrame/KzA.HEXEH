@@ -14,7 +14,7 @@ namespace KzA.HEXEH.Core
 
         static Global()
         {
-            Log.Information(@"HEXEH Initializing
+            Log.Information(@"[Global] HEXEH Initializing
  __  __     ______     __  __     ______     __  __    
 /\ \_\ \   /\  ___\   /\_\_\_\   /\  ___\   /\ \_\ \   
 \ \  __ \  \ \  __\   \/_/\_\/_  \ \  __\   \ \  __ \  
@@ -22,17 +22,17 @@ namespace KzA.HEXEH.Core
   \/_/\/_/   \/_____/   \/_/\/_/   \/_____/   \/_/\/_/ 
                                                        
 ");
-            Log.Verbose("Creating dynamic assembly and module");
+            Log.Debug("[Global] Creating dynamic assembly and module");
             var aName = new AssemblyName("KzA.HEXEH.Core.Dynamic");
             var ab = AssemblyBuilder.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndCollect);
             DynamicModule = ab.DefineDynamicModule("KzA.HEXEH.Core.Dynamic");
-            Log.Verbose("Created dynamic assembly and module");
+            Log.Debug("[Global] Created dynamic assembly and module");
 
-            Log.Verbose("Creating dynamic parsers");
+            Log.Debug("[Global] Creating dynamic parsers");
             SchemaProcessor.InitializeSchemaParsers();
-            Log.Verbose("Created dynamic parsers");
+            Log.Debug("[Global] Created dynamic parsers");
 
-            Log.Information("HEXEH Initialized");
+            Log.Information("[Global] HEXEH Initialized");
             IsInitialized = true;
         }
 

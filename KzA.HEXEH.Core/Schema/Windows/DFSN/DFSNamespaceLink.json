@@ -20,8 +20,14 @@
       {
         "Name": "TargetList",
         "Parser": {
-          "Type": 11,
-          "Target": "Windows.DFSN.TargetList"
+          "Type": 10,
+          "Target": "Common.LengthedObject",
+          "Options": {
+            "LenOfLen": "4",
+            "ObjectParser": "Common.CountedLengthInheritedObjectArray",
+            "IsSchema": "false",
+            "ParserOptions": "{\"LenOfCount\": \"4\",\"ObjectParser\": \"Windows.DFSN.TargetEntry\",\"IsSchema\": \"true\"}"
+          }
         }
       },
       {

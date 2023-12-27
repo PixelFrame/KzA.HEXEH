@@ -1,59 +1,82 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 using System.Text;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    public class NullTerminatedAsciiStringParser : IParser
+    public class NullTerminatedAsciiStringParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
-        private Encoding encoding = Encoding.ASCII;
+        public override ParserType Type => ParserType.Hardcoded;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
-            return new();
+            return [];
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Input.Length);
+            return Parse(Input, Input.Length, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0, out Read);
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, Offset, Input.Length - Offset);
+            return Parse(Input, Offset, Input.Length - Offset, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            byte[] terminator = [0x00];
-            var len = Input.IndexOf(terminator);
-            Read = len + 1;
-            return new DataNode($"String ({encoding.EncodingName})", encoding.GetString(Input.Slice(Offset, len).ToArray()));
-        }
-
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
-        {
-            var res = Parse(in Input, Offset, out int read);
-            if (read != Length)
+            Log.Debug("[NullTerminatedAsciiStringParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                throw new ArgumentException("Given length does not match actual string length");
+                byte[] terminator = [0x00];
+                var len = Input.IndexOf(terminator);
+                Read = len + 1;
+                var res = new DataNode($"String ({Encoding.ASCII.EncodingName})", Encoding.ASCII.GetString(Input.Slice(Offset, len).ToArray()));
+                Log.Debug("[NullTerminatedAsciiStringParser] Parsed {Read} bytes", Read);
+                ParseStack!.PopEx();
+                return res;
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Failed to parse", ParseStack!.Dump(), Offset, e);
+            }
+        }
+
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
+        {
+            var res = Parse(in Input, Offset, out int read, ParseStack);
+            if (read < Length)
+            {
+                var paddingNode = new DataNode()
+                {
+                    Label = "Padding (Unread Bytes)",
+                    Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                };
+                res.Children.Add(paddingNode);
+            }
+            if (read > Length)
+            {
+                Log.Error("[NullTerminatedAsciiStringParser] Actual string length exceeding given length");
+                ParseStack!.Push(GetType().FullName ?? GetType().Name);
+                throw new ParseLengthMismatchException("Actual string length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
             return res;
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
             throw new NotSupportedException();
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

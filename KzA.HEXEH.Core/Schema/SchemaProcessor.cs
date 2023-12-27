@@ -17,15 +17,15 @@ namespace KzA.HEXEH.Core.Schema
             var schemaName = GenerateSchemaFilePath(ParserType);
             if (ParserManager.CreatedSchema.TryGetValue(schemaName, out SchemaJsonObject? value))
             {
-                Log.Verbose("SchemaJsonObject {schemaName} existing", schemaName);
+                Log.Debug("[SchemaProcessor] SchemaJsonObject {schemaName} existing", schemaName);
                 return value;
             }
-            Log.Verbose("Loading schema {schemaName}", schemaName);
+            Log.Debug("[SchemaProcessor] Loading schema {schemaName}", schemaName);
             var schemaJsonContent = File.ReadAllText($"./Schema/{schemaName}");
-            Log.Debug($"Schema content:{Environment.NewLine}{{schemaJsonContent}}", schemaJsonContent);
+            Log.Verbose($"[SchemaProcessor] Schema content:{Environment.NewLine}{{schemaJsonContent}}", schemaJsonContent);
             var schema = JsonSerializer.Deserialize<SchemaJsonObject>(schemaJsonContent)!;
             ParserManager.CreatedSchema.Add(schemaName, schema);
-            Log.Verbose("Loaded schema {schemaName}", schemaName);
+            Log.Debug("[SchemaProcessor] Loaded schema {schemaName}", schemaName);
             return schema;
         }
 
@@ -39,18 +39,18 @@ namespace KzA.HEXEH.Core.Schema
                 {
                     if (ParserManager.CreatedEnums.TryGetValue(enumObj.Name, out Type? value))
                     {
-                        Log.Verbose("Flag type {enumName} existing", enumObj.Name);
+                        Log.Debug("[SchemaProcessor] Flag type {enumName} existing", enumObj.Name);
                         types.Add(value);
                         continue;
                     }
-                    Log.Verbose("Creating Enum type {enumName}", enumObj.Name);
+                    Log.Debug("[SchemaProcessor] Creating Enum type {enumName}", enumObj.Name);
                     var eb = Global.DynamicModule.DefineEnum($"KzA.HEXEH.Core.Dynamic.Enums.{enumObj.Name}", TypeAttributes.Public, typeof(int));
                     foreach (var item in enumObj.Definition)
                     {
                         eb.DefineLiteral(item.Value, int.Parse(item.Key));
                     }
                     var enumType = eb.CreateType();
-                    Log.Verbose("Created Enum type {enumName}", enumObj.Name);
+                    Log.Debug("[SchemaProcessor] Created Enum type {enumName}", enumObj.Name);
                     types.Add(enumType);
                     ParserManager.CreatedEnums.Add(enumObj.Name, enumType);
                 }
@@ -62,11 +62,11 @@ namespace KzA.HEXEH.Core.Schema
                 {
                     if (ParserManager.CreatedEnums.TryGetValue(flagObj.Name, out Type? value))
                     {
-                        Log.Verbose("Flag type {enumName} existing", flagObj.Name);
+                        Log.Debug("[SchemaProcessor] Flag type {enumName} existing", flagObj.Name);
                         types.Add(value);
                         continue;
                     }
-                    Log.Verbose("Creating Flag type {enumName}", flagObj.Name);
+                    Log.Debug("[SchemaProcessor] Creating Flag type {enumName}", flagObj.Name);
                     var eb = Global.DynamicModule.DefineEnum($"KzA.HEXEH.Core.Dynamic.Enums.{flagObj.Name}", TypeAttributes.Public, typeof(int));
                     var flagsAttrib = new CustomAttributeBuilder(typeof(FlagsAttribute).GetConstructor(Type.EmptyTypes)!, Array.Empty<object>());
                     eb.SetCustomAttribute(flagsAttrib);
@@ -75,7 +75,7 @@ namespace KzA.HEXEH.Core.Schema
                         eb.DefineLiteral(item.Value, int.Parse(item.Key));
                     }
                     var flagsType = eb.CreateType();
-                    Log.Verbose("Created Flag type {enumName}", flagObj.Name);
+                    Log.Debug("[SchemaProcessor] Created Flag type {enumName}", flagObj.Name);
                     types.Add(flagsType);
                     ParserManager.CreatedEnums.Add(flagObj.Name, flagsType);
                 }
@@ -92,16 +92,16 @@ namespace KzA.HEXEH.Core.Schema
                 var typeName = ProcessSchemaFileName(schemaFile);
                 if (typeName == null)
                 {
-                    Log.Warning("Invalid schema name {schemaFile}, skipping", schemaFile);
+                    Log.Warning("[SchemaProcessor] Invalid schema name {schemaFile}, skipping", schemaFile);
                     continue;
                 }
-                Log.Verbose("Creating Parser for schema {schemaFile}, type name {typeName}", schemaFile, typeName);
+                Log.Debug("[SchemaProcessor] Creating Parser for schema {schemaFile}, type name {typeName}", schemaFile, typeName);
                 var tb = Global.DynamicModule.DefineType(
                         typeName,
                         TypeAttributes.Public | TypeAttributes.Class,
                         typeof(SchemaParser));
                 _ = tb.CreateType();
-                Log.Verbose("Created Parser for schema {schemaFile}", schemaFile);
+                Log.Debug("[SchemaProcessor] Created Parser for schema {schemaFile}", schemaFile);
             }
             ParserManager.RefreshParsers();
         }

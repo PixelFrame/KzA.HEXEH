@@ -1,57 +1,69 @@
 ﻿using KzA.HEXEH.Core.Output;
+using Serilog;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
-    internal class GuidParser : IParser
+    internal class GuidParser : ParserBase
     {
-        public ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Hardcoded;
 
-        public Dictionary<string, Type> GetOptions()
+        public override Dictionary<string, Type> GetOptions()
         {
             return [];
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            return Parse(Input, 0);
+            return Parse(Input, 0, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
             Read = 16;
-            return Parse(Input);
+            return Parse(Input, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            var guid = new Guid(Input.Slice(Offset, 16));
-            return new DataNode()
+            Log.Debug("[GuidParser] Start parsing from {Offset}", Offset);
+            ParseStack = PrepareParseStack(ParseStack);
+            try
             {
-                Label = "GUID",
-                Value = guid.ToString(),
-            };
+                var guid = new Guid(Input.Slice(Offset, 16));
+                Log.Debug("[GuidParser] Parsed 16 bytes");
+                ParseStack!.PopEx();
+                return new DataNode()
+                {
+                    Label = "GUID",
+                    Value = guid.ToString(),
+                };
+            }
+            catch (Exception e)
+            {
+                throw new ParseFailureException("Unable to create GUID from given data", ParseStack!.Dump(), Offset, e);
+            }
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
             Read = 16;
-            return Parse(Input, Offset);
+            return Parse(Input, Offset, ParseStack);
         }
 
-        public DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length)
+        public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
             if (Length != 16) throw new ArgumentException("GUID length must be 16");
-            return Parse(Input, Offset);
+            return Parse(Input, Offset, ParseStack);
         }
 
-        public void SetOptions(Dictionary<string, object> Options)
+        public override void SetOptions(Dictionary<string, object> Options)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
-        public void SetOptionsFromSchema(Dictionary<string, string> Options)
+        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }
