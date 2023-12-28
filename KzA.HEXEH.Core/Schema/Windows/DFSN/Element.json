@@ -22,7 +22,7 @@
           "Options": {
             "LenOfLen": "4",
             "ObjectParser": "[Name;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       }

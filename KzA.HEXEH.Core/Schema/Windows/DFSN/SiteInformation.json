@@ -25,7 +25,7 @@
           "Options": {
             "ObjectCount": "{SiteEntryCount}",
             "ObjectParser": "Windows.DFSN.SiteEntry",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       }

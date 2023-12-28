@@ -29,7 +29,7 @@
           "Options": {
             "ObjectCount": "{SiteNameInfoCount}",
             "ObjectParser": "Windows.DFSN.SiteNameInfo",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       }

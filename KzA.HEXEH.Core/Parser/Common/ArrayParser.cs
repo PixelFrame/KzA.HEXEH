@@ -17,7 +17,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 { "ObjectCount", typeof(int) },
                 { "ObjectParser", typeof(string) },
-                { "IsSchema?", typeof(bool) },
+                { "IncludeSchema?", typeof(bool) },
                 { "ParserOptions?", typeof(Dictionary<string, object>) }
             };
         }
@@ -100,7 +100,7 @@ namespace KzA.HEXEH.Core.Parser.Common
 
         public override void SetOptions(Dictionary<string, object> Options)
         {
-            if (Options.TryGetValue("IsSchema", out var isSchemaObj))
+            if (Options.TryGetValue("IncludeSchema", out var isSchemaObj))
             {
                 if (isSchemaObj is bool _isSchema)
                 {
@@ -108,7 +108,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid Option: IsSchema");
+                    throw new ArgumentException("Invalid Option: IncludeSchema");
                 }
             }
 
@@ -156,7 +156,7 @@ namespace KzA.HEXEH.Core.Parser.Common
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            if (Options.TryGetValue("IsSchema", out var isSchemaStr))
+            if (Options.TryGetValue("IncludeSchema", out var isSchemaStr))
             {
                 if (isSchemaStr.Equals("true", StringComparison.OrdinalIgnoreCase))
                 {

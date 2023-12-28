@@ -19,7 +19,7 @@
             "ObjectCount": "{TargetCount}",
             "LenOfLen": "4",
             "ObjectParser": "Windows.DFSN.TargetEntry",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       }

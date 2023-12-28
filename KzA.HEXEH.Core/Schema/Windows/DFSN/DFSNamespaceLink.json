@@ -18,7 +18,7 @@
           "Options": {
             "LenOfLen": "4",
             "ObjectParser": "Windows.DFSN.TargetList",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       },

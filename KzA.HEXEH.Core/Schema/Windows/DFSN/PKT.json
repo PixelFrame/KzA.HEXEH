@@ -25,7 +25,7 @@
           "Options": {
             "ObjectCount": "{ElementCount}",
             "ObjectParser": "Windows.DFSN.Element",
-            "IsSchema": "true"
+            "IncludeSchema": "true"
           }
         }
       }
