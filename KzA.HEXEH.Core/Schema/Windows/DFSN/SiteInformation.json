@@ -1,15 +1,8 @@
 {
   "Name": "DFSN Site Information BLOB",
   "Structure": {
-    "Fields": "Size:SiteTableGuid:SiteEntries",
+    "Fields": "SiteTableGuid:SiteEntryCount:SiteEntries",
     "Definition": [
-      {
-        "Name": "Size",
-        "Parser": {
-          "Type": 0,
-          "Target": "DWORD"
-        }
-      },
       {
         "Name": "SiteTableGuid",
         "Parser": {
@@ -18,12 +11,19 @@
         }
       },
       {
+        "Name": "SiteEntryCount",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      },
+      {
         "Name": "SiteEntries",
         "Parser": {
           "Type": 10,
-          "Target": "Common.CountedLengthInheritedObjectArray",
+          "Target": "Common.Array",
           "Options": {
-            "LenOfCount": "4",
+            "ObjectCount": "{SiteEntryCount}",
             "ObjectParser": "Windows.DFSN.SiteEntry",
             "IsSchema": "true"
           }

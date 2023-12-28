@@ -2,7 +2,7 @@
 using Serilog;
 using System.Text;
 
-namespace KzA.HEXEH.Core.Parser.Common
+namespace KzA.HEXEH.Core.Parser.Common.String
 {
     public class LengthedStringParser : ParserBase
     {
@@ -55,7 +55,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 innerParser.SetOptions(new Dictionary<string, object>()
                 {
                     {"LenOfLen", lenOfLen },
-                    {"ObjectParser", "Common.String" },
+                    {"ObjectParser", "Common.String.String" },
                     {"ParserOptions", stringParserOpt },
                 });
                 var innerResult = innerParser.Parse(Input, Offset, out Read, ParseStack);
@@ -87,7 +87,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 innerParser.SetOptions(new Dictionary<string, object>()
                 {
                     {"LenOfLen", lenOfLen },
-                    {"ObjectParser", "Common.String" },
+                    {"ObjectParser", "Common.String.String" },
                     {"ParserOptions", stringParserOpt },
                 });
                 var innerResult = innerParser.Parse(Input, Offset, Length, ParseStack);

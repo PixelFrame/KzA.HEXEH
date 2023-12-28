@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Web.Services.Description;
 
 namespace KzA.HEXEH.Core.Schema
 {
@@ -12,7 +11,7 @@ namespace KzA.HEXEH.Core.Schema
     {
         internal static SchemaJsonObject LoadSchema(Type ParserType)
         {
-            if (!ParserType.IsAssignableTo(typeof(IParser))) 
+            if (!ParserType.IsAssignableTo(typeof(IParser)))
                 throw new ArgumentException($"{ParserType.FullName} is not a schema parser");
             var schemaName = GenerateSchemaFilePath(ParserType);
             if (ParserManager.CreatedSchema.TryGetValue(schemaName, out SchemaJsonObject? value))

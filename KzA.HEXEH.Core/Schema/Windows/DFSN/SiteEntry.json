@@ -1,13 +1,13 @@
 {
   "Name": "DFSN Site Entry BLOB",
   "Structure": {
-    "Fields": "ServerName:SiteNameInfo",
+    "Fields": "ServerName:SiteNameInfoCount:SiteNameInfo",
     "Definition": [
       {
         "Name": "ServerName",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
@@ -15,12 +15,19 @@
         }
       },
       {
+        "Name": "SiteNameInfoCount",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      },
+      {
         "Name": "SiteNameInfo",
         "Parser": {
           "Type": 10,
-          "Target": "Common.CountedLengthInheritedObjectArray",
+          "Target": "Common.Array.Array",
           "Options": {
-            "LenOfCount": "4",
+            "ObjectCount": "{SiteNameInfoCount}",
             "ObjectParser": "Windows.DFSN.SiteNameInfo",
             "IsSchema": "true"
           }

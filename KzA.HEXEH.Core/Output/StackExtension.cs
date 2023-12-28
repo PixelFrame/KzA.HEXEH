@@ -1,9 +1,5 @@
 ﻿using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace KzA.HEXEH.Core.Output
 {
@@ -15,7 +11,7 @@ namespace KzA.HEXEH.Core.Output
             var sb = new StringBuilder();
             var depth = 0;
             var intend = "  ";
-            while(Stack.Count > 0)
+            while (Stack.Count > 0)
             {
                 sb.Append(string.Concat(Enumerable.Repeat(intend, depth++)));
                 sb.AppendLine(Stack.Pop()?.ToString());

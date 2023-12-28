@@ -40,7 +40,7 @@
         "Name": "ServerName",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
@@ -51,7 +51,7 @@
         "Name": "ShareName",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"

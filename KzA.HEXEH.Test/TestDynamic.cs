@@ -63,15 +63,5 @@ namespace KzA.HEXEH.Test
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
         }
-
-        [Fact]
-        public void TestConditionParser()
-        {
-            Core.Global.Initialize();
-            var data = new byte[] { 0x03, 0x00, 0x03, 0x61, 0x62, 0x63, 0x07, 0x63, 0x6F, 0x6E, 0x74, 0x6F, 0x73, 0x6F, 0x03, 0x63, 0x6F, 0x6D, 0x00, 0x50, 0x60, 0x70, 0x80 };
-            var parser = ParserManager.InstantiateParserByRelativeName("Test.Condition", true);
-            var result = parser.Parse(data);
-            Output.WriteLine(result.ToStringVerbose());
-        }
     }
 }

@@ -14,7 +14,7 @@
         "Name": "Prefix",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
@@ -25,7 +25,7 @@
         "Name": "ShortPrefix",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
@@ -58,7 +58,7 @@
         "Name": "Comment",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"

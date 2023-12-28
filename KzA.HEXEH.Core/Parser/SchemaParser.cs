@@ -98,8 +98,9 @@ namespace KzA.HEXEH.Core.Parser
                             Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
                             if (def.Parser.Options != null)
                             {
-                                var options = ProcessOptionCondition(def.Parser.Options, head.Children);
-                                options = ProcessOptionInterpolation(options, head.Children);
+                                var options = new Dictionary<string, string>(def.Parser.Options);
+                                ProcessOptionCondition(options, head.Children);
+                                ProcessOptionInterpolation(options, head.Children);
                                 nextParser.SetOptionsFromSchema(options);
                             }
                             var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
@@ -180,7 +181,7 @@ namespace KzA.HEXEH.Core.Parser
                 case "BYTE":
                     Node.Value = Input[Index].ToString();
                     Node.DisplayValue = $"{Input[Index]} (0x{Input[Index]:X})";
-                    if(Expected != null && !Expected.Equals((ulong)Input[Index]))
+                    if (Expected != null && !Expected.Equals((ulong)Input[Index]))
                     {
                         throw new ParseUnexpectedValueException($"{_currentField} value {Input[Index]} does not equal to expected value {Expected}", _currentStack.Dump(), Index);
                     }
@@ -230,7 +231,7 @@ namespace KzA.HEXEH.Core.Parser
             switch (TypeName)
             {
                 case "BYTE":
-                    value = Input[Index++]; 
+                    value = Input[Index++];
                     Node.Length = 1;
                     break;
                 case "WORD":
@@ -275,7 +276,7 @@ namespace KzA.HEXEH.Core.Parser
             return parsed.Where(n => n.Label == m.Groups[1].Value).First().Value;
         }
 
-        private Dictionary<string, string> ProcessOptionCondition(Dictionary<string, string> original, IEnumerable<DataNode> parsed)
+        private void ProcessOptionCondition(Dictionary<string, string> original, IEnumerable<DataNode> parsed)
         {
             foreach (var key in original.Keys)
             {
@@ -288,10 +289,9 @@ namespace KzA.HEXEH.Core.Parser
                     throw new SchemaException("Unable to complete option conditional replacement", _schema.Name, $"{_currentField}.{key}", e);
                 }
             }
-            return original;
         }
 
-        private Dictionary<string, string> ProcessOptionInterpolation(Dictionary<string, string> original, IEnumerable<DataNode> parsed)
+        private void ProcessOptionInterpolation(Dictionary<string, string> original, IEnumerable<DataNode> parsed)
         {
             foreach (var key in original.Keys)
             {
@@ -304,7 +304,6 @@ namespace KzA.HEXEH.Core.Parser
                     throw new SchemaException("Unable to complete option interpolation replacement", _schema.Name, $"{_currentField}.{key}", e);
                 }
             }
-            return original;
         }
 
         [GeneratedRegex(@"{(\w+)}")]

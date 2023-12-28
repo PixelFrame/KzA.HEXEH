@@ -2,7 +2,7 @@
 using Serilog;
 using System.Text;
 
-namespace KzA.HEXEH.Core.Parser.Common
+namespace KzA.HEXEH.Core.Parser.Common.String
 {
     public class NullTerminatedAsciiStringParser : ParserBase
     {

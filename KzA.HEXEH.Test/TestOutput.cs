@@ -8,7 +8,7 @@ public class TestOutput(ITestOutputHelper output) : TestBase(output)
     [Fact]
     public void Test()
     {
-        var head = new DataNode("Head", "This is head",0 ,0);
+        var head = new DataNode("Head", "This is head", 0, 0);
         var child0 = new DataNode(
             "Child0", "This is first child",
             new string[] { "aaa", "bbb", "ccc" }, 0, 0

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace KzA.HEXEH.Core.Parser
+﻿namespace KzA.HEXEH.Core.Parser
 {
     internal class ParseException : Exception
     {
@@ -26,7 +20,7 @@ namespace KzA.HEXEH.Core.Parser
     {
     }
 
-    internal class ParseUnexpectedValueException(string Message, string ParseStackPrint, int Index) : ParseException(Message, ParseStackPrint, Index, null) 
+    internal class ParseUnexpectedValueException(string Message, string ParseStackPrint, int Index) : ParseException(Message, ParseStackPrint, Index, null)
     {
     }
 }

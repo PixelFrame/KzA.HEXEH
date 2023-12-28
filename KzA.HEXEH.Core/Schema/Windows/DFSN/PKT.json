@@ -1,22 +1,29 @@
 {
   "Name": "PKT Attribute",
   "Structure": {
-    "Fields": "BLOBVersion:BLOBElements",
+    "Fields": "Version:ElementCount:Elements",
     "Definition": [
       {
-        "Name": "BLOBVersion",
+        "Name": "Version",
         "Parser": {
           "Type": 0,
           "Target": "DWORD"
         }
       },
       {
-        "Name": "BLOBElements",
+        "Name": "ElementCount",
+        "Parser": {
+          "Type": 0,
+          "Target": "DWORD"
+        }
+      },
+      {
+        "Name": "Elements",
         "Parser": {
           "Type": 10,
-          "Target": "Common.CountedLengthInheritedObjectArray",
+          "Target": "Common.Array",
           "Options": {
-            "LenOfCount": "4",
+            "ObjectCount": "{ElementCount}",
             "ObjectParser": "Windows.DFSN.Element",
             "IsSchema": "true"
           }

@@ -1,15 +1,8 @@
 {
   "Name": "DFSN Link BLOB",
   "Structure": {
-    "Fields": "Size:LinkID:TargetList:ReservedSize:Reserved:ReferralTTL",
+    "Fields": "LinkID:TargetList:ReservedSize:Reserved:ReferralTTL",
     "Definition": [
-      {
-        "Name": "Size",
-        "Parser": {
-          "Type": 0,
-          "Target": "DWORD"
-        }
-      },
       {
         "Name": "LinkID",
         "Parser": {
@@ -24,9 +17,8 @@
           "Target": "Common.LengthedObject",
           "Options": {
             "LenOfLen": "4",
-            "ObjectParser": "Common.CountedLengthInheritedObjectArray",
-            "IsSchema": "false",
-            "ParserOptions": "{\"LenOfCount\": \"4\",\"ObjectParser\": \"Windows.DFSN.TargetEntry\",\"IsSchema\": \"true\"}"
+            "ObjectParser": "Windows.DFSN.TargetList",
+            "IsSchema": "true"
           }
         }
       },

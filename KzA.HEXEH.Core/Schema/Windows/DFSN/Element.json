@@ -7,7 +7,7 @@
         "Name": "Name",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
@@ -17,8 +17,13 @@
       {
         "Name": "Data",
         "Parser": {
-          "Type": 11,
-          "Target": "[Name;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]"
+          "Type": 10,
+          "Target": "Common.LengthedObject",
+          "Options": {
+            "LenOfLen": "4",
+            "ObjectParser": "[Name;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]",
+            "IsSchema": "true"
+          }
         }
       }
     ]

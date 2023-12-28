@@ -15,7 +15,7 @@
         "Name": "SiteName",
         "Parser": {
           "Type": 10,
-          "Target": "Common.LengthedString",
+          "Target": "Common.String.LengthedString",
           "Options": {
             "LenOfLen": "2",
             "Encoding": "Unicode"
