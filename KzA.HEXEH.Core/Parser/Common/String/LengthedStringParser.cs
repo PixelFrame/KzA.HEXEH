@@ -111,7 +111,11 @@ namespace KzA.HEXEH.Core.Parser.Common.String
         {
             if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
             {
-                if (lenOfLenObj is int _lenOfLen) { lenOfLen = _lenOfLen; }
+                if (lenOfLenObj is int _lenOfLen)
+                {
+                    lenOfLen = _lenOfLen;
+                    Log.Debug("[LengthedStringParser] Set option LenOfLen to {lenOfLen}", lenOfLen);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: LenOfLen");
@@ -119,7 +123,11 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             }
             if (Options.TryGetValue("Encoding", out var encodingObj))
             {
-                if (encodingObj is Encoding _encoding) { encoding = _encoding; }
+                if (encodingObj is Encoding _encoding)
+                {
+                    encoding = _encoding;
+                    Log.Debug("[LengthedStringParser] Set option Encoding to {encoding}", encoding.EncodingName);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: Encoding");
@@ -131,7 +139,11 @@ namespace KzA.HEXEH.Core.Parser.Common.String
         {
             if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
             {
-                if (int.TryParse(lenOfLenObj, out var _lenOfLen)) { lenOfLen = _lenOfLen; }
+                if (int.TryParse(lenOfLenObj, out var _lenOfLen))
+                {
+                    lenOfLen = _lenOfLen;
+                    Log.Debug("[LengthedStringParser] Set option LenOfLen to {lenOfLen}", lenOfLen);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: LenOfLen");
@@ -141,6 +153,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             if (Options.TryGetValue("Encoding", out var encodingObj))
             {
                 encoding = Encoding.GetEncoding(encodingObj);
+                Log.Debug("[LengthedStringParser] Set option Encoding to {encoding}", encoding.EncodingName);
             }
             else
             {

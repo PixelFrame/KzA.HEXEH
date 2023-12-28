@@ -64,7 +64,11 @@ namespace KzA.HEXEH.Core.Parser.Common.String
         {
             if (Options.TryGetValue("Encoding", out var encodingObj))
             {
-                if (encodingObj is Encoding _encoding) { encoding = _encoding; }
+                if (encodingObj is Encoding _encoding)
+                {
+                    encoding = _encoding;
+                    Log.Debug("[StringParser] Set option Encoding to {encoding}", encoding.EncodingName);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: Encoding");
@@ -81,6 +85,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             if (Options.TryGetValue("Encoding", out var encodingObj))
             {
                 encoding = Encoding.GetEncoding(encodingObj);
+                Log.Debug("[StringParser] Set option Encoding to {encoding}", encoding.EncodingName);
             }
             else
             {

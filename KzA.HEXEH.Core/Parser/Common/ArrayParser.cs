@@ -8,7 +8,7 @@ namespace KzA.HEXEH.Core.Parser.Common
     {
         public override ParserType Type => ParserType.Hardcoded;
         private int objectCount;
-        private bool isSchema = false;
+        private bool includeSchema = false;
         private IParser? nextParser;
 
         public override Dictionary<string, Type> GetOptions()
@@ -37,7 +37,7 @@ namespace KzA.HEXEH.Core.Parser.Common
         }
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            Log.Debug("[CountedObjectParser] Start parsing from {Offset}", Offset);
+            Log.Debug("[ArrayParser] Start parsing from {Offset}", Offset);
             ParseStack = PrepareParseStack(ParseStack);
             try
             {
@@ -60,7 +60,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 }
                 Read = Offset - start;
                 head.Length = Read;
-                Log.Debug("[CountedObjectParser] Parsed {Read} bytes", Read);
+                Log.Debug("[ArrayParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return head;
             }
@@ -91,7 +91,7 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
             if (read > Length)
             {
-                Log.Error("[CountedObjectParser] Actual object array length exceeding given length");
+                Log.Error("[ArrayParser] Actual object array length exceeding given length");
                 ParseStack!.Push(GetType().FullName ?? GetType().Name);
                 throw new ParseLengthMismatchException("Actual object array length exceeding given length", ParseStack!.Dump(), Offset, null);
             }
@@ -100,11 +100,12 @@ namespace KzA.HEXEH.Core.Parser.Common
 
         public override void SetOptions(Dictionary<string, object> Options)
         {
-            if (Options.TryGetValue("IncludeSchema", out var isSchemaObj))
+            if (Options.TryGetValue("IncludeSchema", out var includeSchemaObj))
             {
-                if (isSchemaObj is bool _isSchema)
+                if (includeSchemaObj is bool _includeSchemaSchema)
                 {
-                    isSchema = _isSchema;
+                    includeSchema = _includeSchemaSchema;
+                    Log.Debug("[ArrayParser] Set option IncludeSchema to {includeSchema}", includeSchema);
                 }
                 else
                 {
@@ -116,7 +117,8 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 if (targetTypeNameObj is string targetTypeName)
                 {
-                    nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+                    nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, includeSchema);
+                    Log.Debug("[ArrayParser] Set option ObjectParser to {targetTypeName}", targetTypeName);
                 }
                 else
                 {
@@ -130,7 +132,11 @@ namespace KzA.HEXEH.Core.Parser.Common
 
             if (Options.TryGetValue("ObjectCount", out var objectCountObj))
             {
-                if (objectCountObj is int _objectCount) { objectCount = _objectCount; }
+                if (objectCountObj is int _objectCount)
+                {
+                    objectCount = _objectCount;
+                    Log.Debug("[ArrayParser] Set option ObjectCount to {objectCount}", objectCount);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: ObjectCount");
@@ -141,11 +147,12 @@ namespace KzA.HEXEH.Core.Parser.Common
                 objectCount = 0;
             }
 
-            if (Options.TryGetValue("ParserOptions?", out var nextParserOptionsObj))
+            if (Options.TryGetValue("ParserOptions", out var nextParserOptionsObj))
             {
                 if (nextParserOptionsObj is Dictionary<string, object> nextParserOptions)
                 {
                     nextParser.SetOptions(nextParserOptions);
+                    Log.Debug("[ArrayParser] Set option ParserOptions to {nextParserOptions}", nextParserOptions);
                 }
                 else
                 {
@@ -160,13 +167,15 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 if (isSchemaStr.Equals("true", StringComparison.OrdinalIgnoreCase))
                 {
-                    isSchema = true;
+                    includeSchema = true;
+                    Log.Debug("[ArrayParser] Set option IncludeSchema to {includeSchema}", includeSchema);
                 }
             }
 
             if (Options.TryGetValue("ObjectParser", out var targetTypeName))
             {
-                nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+                nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, includeSchema);
+                Log.Debug("[ArrayParser] Set option ObjectParser to {targetTypeName}", targetTypeName);
             }
             else
             {
@@ -175,7 +184,11 @@ namespace KzA.HEXEH.Core.Parser.Common
 
             if (Options.TryGetValue("ObjectCount", out var objectCountStr))
             {
-                if (int.TryParse(objectCountStr, out var _objectCount)) { objectCount = _objectCount; }
+                if (int.TryParse(objectCountStr, out var _objectCount))
+                {
+                    objectCount = _objectCount;
+                    Log.Debug("[ArrayParser] Set option ObjectCount to {objectCount}", objectCount);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: ObjectCount");
@@ -192,6 +205,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 if (nextParserOptions != null)
                 {
                     nextParser.SetOptionsFromSchema(nextParserOptions);
+                    Log.Debug("[ArrayParser] Set option ParserOptions to {nextParserOptions}", nextParserOptions);
                 }
                 else
                 {

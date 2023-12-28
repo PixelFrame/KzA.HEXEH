@@ -18,7 +18,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 _lenOfLen = value;
             }
         }
-        private bool isSchema = false;
+        private bool includeSchema = false;
         private IParser? nextParser;
 
         public override Dictionary<string, Type> GetOptions()
@@ -108,11 +108,12 @@ namespace KzA.HEXEH.Core.Parser.Common
 
         public override void SetOptions(Dictionary<string, object> Options)
         {
-            if (Options.TryGetValue("IncludeSchema", out var isSchemaObj))
+            if (Options.TryGetValue("IncludeSchema", out var includeSchemaObj))
             {
-                if (isSchemaObj is bool _isSchema)
+                if (includeSchemaObj is bool _includeSchema)
                 {
-                    isSchema = _isSchema;
+                    includeSchema = _includeSchema;
+                    Log.Debug("[LengthedObjectParser] Set option IncludeSchema to {includeSchema}", includeSchema);
                 }
                 else
                 {
@@ -124,7 +125,8 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 if (targetTypeNameObj is string targetTypeName)
                 {
-                    nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+                    nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, includeSchema);
+                    Log.Debug("[LengthedObjectParser] Set option ObjectParser to {targetTypeName}", targetTypeName);
                 }
                 else
                 {
@@ -138,7 +140,11 @@ namespace KzA.HEXEH.Core.Parser.Common
 
             if (Options.TryGetValue("LenOfLen", out var lenOfLenObj))
             {
-                if (lenOfLenObj is int _lenOfLen) { lenOfLen = _lenOfLen; }
+                if (lenOfLenObj is int _lenOfLen)
+                {
+                    lenOfLen = _lenOfLen;
+                    Log.Debug("[LengthedObjectParser] Set option LenOfLen to {lenOfLen}", lenOfLen);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: LenOfLen");
@@ -154,6 +160,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 if (nextParserOptionsObj is Dictionary<string, object> nextParserOptions)
                 {
                     nextParser.SetOptions(nextParserOptions);
+                    Log.Debug("[LengthedObjectParser] Set option ParserOptions to {nextParserOptions}", nextParserOptions);
                 }
                 else
                 {
@@ -168,13 +175,15 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 if (isSchemaStr.Equals("true", StringComparison.OrdinalIgnoreCase))
                 {
-                    isSchema = true;
+                    includeSchema = true;
+                    Log.Debug("[LengthedObjectParser] Set option IncludeSchema to {includeSchema}", includeSchema);
                 }
             }
 
             if (Options.TryGetValue("ObjectParser", out var targetTypeName))
             {
-                nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, isSchema);
+                nextParser = ParserManager.InstantiateParserByRelativeName(targetTypeName, includeSchema);
+                Log.Debug("[LengthedObjectParser] Set option ObjectParser to {targetTypeName}", targetTypeName);
             }
             else
             {
@@ -183,7 +192,11 @@ namespace KzA.HEXEH.Core.Parser.Common
 
             if (Options.TryGetValue("LenOfLen", out var lenOfLenStr))
             {
-                if (int.TryParse(lenOfLenStr, out var __lenOfLen)) { lenOfLen = __lenOfLen; }
+                if (int.TryParse(lenOfLenStr, out var __lenOfLen))
+                {
+                    lenOfLen = __lenOfLen;
+                    Log.Debug("[LengthedObjectParser] Set option LenOfLen to {lenOfLen}", lenOfLen);
+                }
                 else
                 {
                     throw new ArgumentException("Invalid Option: LenOfLen");
@@ -200,6 +213,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 if (nextParserOptions != null)
                 {
                     nextParser.SetOptionsFromSchema(nextParserOptions);
+                    Log.Debug("[LengthedObjectParser] Set option ParserOptions to {nextParserOptions}", nextParserOptions);
                 }
                 else
                 {
