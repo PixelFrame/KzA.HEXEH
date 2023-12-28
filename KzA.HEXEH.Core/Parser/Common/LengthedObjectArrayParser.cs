@@ -58,6 +58,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 var head = new DataNode()
                 {
                     Label = "Array of objects with length specified",
+                    Index = Offset,
                 };
                 var start = Offset;
                 int currentObjLen = 0;
@@ -72,8 +73,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                             case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
                             case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
                         }
+                        head.Children.Add(new DataNode("Length", currentObjLen.ToString(), Offset, lenOfLen));
                         Offset += lenOfLen;
-                        head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
                         head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen, ParseStack));
                         Offset += currentObjLen;
                     }
@@ -89,8 +90,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                             case 2: currentObjLen = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
                             case 4: currentObjLen = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
                         }
+                        head.Children.Add(new DataNode("Length", currentObjLen.ToString(), Offset, lenOfLen));
                         Offset += lenOfLen;
-                        head.Children.Add(new DataNode("Length", currentObjLen.ToString()));
                         head.Children.Add(nextParser.Parse(Input, Offset, currentObjLen, ParseStack));
                         Offset += currentObjLen;
                         if (++loopCnt > Global.LoopMax)
@@ -100,6 +101,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                     }
                 }
                 Read = Offset - start;
+                head.Length = Read;
                 Log.Debug("[LengthedObjectArrayParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return head;
@@ -123,7 +125,10 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
+                res.Length = Length;
                 res.Children.Add(paddingNode);
             }
             if (read > Length)

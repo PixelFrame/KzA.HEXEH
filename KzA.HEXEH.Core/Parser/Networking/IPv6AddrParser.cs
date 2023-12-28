@@ -48,6 +48,8 @@ namespace KzA.HEXEH.Core.Parser.Networking
                 {
                     Label = "IPv6 Address",
                     Value = addrObj.ToString(),
+                    Index = Offset,
+                    Length = 16
                 };
                 Log.Debug("[IPv6AddrParser] Parsed 16 bytes");
                 ParseStack!.PopEx();

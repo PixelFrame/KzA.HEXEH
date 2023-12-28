@@ -37,7 +37,13 @@ namespace KzA.HEXEH.Core.Parser.Common
                 byte[] terminator = [0x00];
                 var len = Input.IndexOf(terminator);
                 Read = len + 1;
-                var res = new DataNode($"String ({Encoding.ASCII.EncodingName})", Encoding.ASCII.GetString(Input.Slice(Offset, len).ToArray()));
+                var res = new DataNode()
+                {
+                    Label = $"String ({Encoding.ASCII.EncodingName})",
+                    Value = Encoding.ASCII.GetString(Input.Slice(Offset, len).ToArray()),
+                    Index = Offset,
+                    Length = Read
+                };
                 Log.Debug("[NullTerminatedAsciiStringParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return res;
@@ -57,7 +63,10 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
+                res.Length = Length;
                 res.Children.Add(paddingNode);
             }
             if (read > Length)

@@ -56,8 +56,14 @@ namespace KzA.HEXEH.Core.Parser.Networking
                         throw new StackOverflowException("Array loop exceeds limitation, please verify if data is valid or adjust the limitation");
                     }
                 }
-                var result = new DataNode("FQDN", sb.ToString());
                 Read = Offset - start;
+                var result = new DataNode()
+                {
+                    Label = "FQDN",
+                    Value = sb.ToString(),
+                    Index = start,
+                    Length = Read
+                };
                 Log.Debug("[FqdnParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return result;
@@ -77,6 +83,8 @@ namespace KzA.HEXEH.Core.Parser.Networking
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
                 res.Children.Add(paddingNode);
             }

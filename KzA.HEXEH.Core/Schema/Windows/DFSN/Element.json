@@ -17,7 +17,7 @@
       {
         "Name": "Data",
         "Parser": {
-          "Type": 15,
+          "Type": 11,
           "Target": "[Name;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]"
         }
       }

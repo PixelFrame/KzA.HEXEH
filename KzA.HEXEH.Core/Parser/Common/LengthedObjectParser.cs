@@ -40,7 +40,6 @@ namespace KzA.HEXEH.Core.Parser.Common
         {
             return Parse(Input, 0, out Read, ParseStack);
         }
-
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
             return Parse(Input, Offset, Input.Length - Offset, ParseStack);
@@ -63,10 +62,12 @@ namespace KzA.HEXEH.Core.Parser.Common
                 var head = new DataNode()
                 {
                     Label = "Object with length specified",
+                    Index = Offset,
                 };
-                head.Children.Add(new DataNode("Length", len.ToString()));
-                head.Children.Add(children);
+                head.Children.Add(new DataNode("Length", len.ToString(), Offset, lenOfLen));
                 Read = len + lenOfLen;
+                head.Children.Add(children);
+                head.Length = Read;
                 Log.Debug("[LengthedObjectParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return head;
@@ -90,7 +91,10 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
+                res.Length = Length;
                 res.Children.Add(paddingNode);
             }
             if (read > Length)

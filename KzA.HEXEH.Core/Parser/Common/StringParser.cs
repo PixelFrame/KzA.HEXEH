@@ -43,7 +43,13 @@ namespace KzA.HEXEH.Core.Parser.Common
             ParseStack = PrepareParseStack(ParseStack);
             try
             {
-                var res = new DataNode($"String ({encoding.EncodingName})", encoding.GetString(Input.Slice(Offset, Length).ToArray()));
+                var res = new DataNode()
+                {
+                    Label = $"String ({encoding.EncodingName})",
+                    Value = encoding.GetString(Input.Slice(Offset, Length).ToArray()),
+                    Index = Offset,
+                    Length = Length
+                };
                 Log.Debug("[StringParser] Parsed {Length} bytes", Length);
                 ParseStack!.PopEx();
                 return res;

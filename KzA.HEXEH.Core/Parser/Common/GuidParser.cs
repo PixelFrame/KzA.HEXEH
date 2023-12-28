@@ -36,6 +36,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "GUID",
                     Value = guid.ToString(),
+                    Index = Offset,
+                    Length = 16,
                 };
             }
             catch (Exception e)

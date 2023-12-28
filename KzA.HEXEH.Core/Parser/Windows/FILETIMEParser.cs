@@ -53,7 +53,9 @@ namespace KzA.HEXEH.Core.Parser.Windows
                 var res = new DataNode()
                 {
                     Label = "FILETIME",
-                    Value = datetime.ToString()
+                    Value = datetime.ToString(),
+                    Index = Offset,
+                    Length = 8,
                 };
                 Log.Debug("[FILETIMEParser] Parsed 8 bytes");
                 ParseStack!.PopEx();

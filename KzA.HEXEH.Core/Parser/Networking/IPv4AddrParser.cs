@@ -41,6 +41,8 @@ namespace KzA.HEXEH.Core.Parser.Networking
                 {
                     Label = "IPv4 Address",
                     Value = $"{Input[Offset]}.{Input[Offset + 1]}.{Input[Offset + 2]}.{Input[Offset + 3]}",
+                    Index = Offset,
+                    Length = 4,
                 };
                 Log.Debug("[IPv4AddrParser] Parsed 4 bytes");
                 ParseStack!.PopEx();

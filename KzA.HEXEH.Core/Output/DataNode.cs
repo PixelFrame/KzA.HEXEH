@@ -12,50 +12,62 @@ namespace KzA.HEXEH.Core.Output
             get { return displayValue ?? Value; }
             set { displayValue = value; }
         }
-        public List<string> Detail { get; set; } = new List<string>();
-        public List<DataNode> Children { get; set; } = new List<DataNode>();
+        public List<string> Detail { get; set; } = [];
+        public List<DataNode> Children { get; set; } = [];
+        public int Index = -1;
+        public int Length = -1;
 
         public DataNode() { }
-        public DataNode(string Label, string Value)
+        public DataNode(string Label, string Value, int Index, int Length)
         {
             this.Label = Label;
             this.Value = Value;
+            this.Index = Index;
+            this.Length = Length;
         }
-        public DataNode(string Label, string Value, string DisplayValue)
+        public DataNode(string Label, string Value, string DisplayValue, int Index, int Length)
         {
             this.Label = Label;
             this.Value = Value;
             this.DisplayValue = DisplayValue;
+            this.Index = Index;
+            this.Length = Length;
         }
-        public DataNode(string Label, string Value, IEnumerable<string> Detail)
+        public DataNode(string Label, string Value, IEnumerable<string> Detail, int Index, int Length)
         {
             this.Label = Label;
             this.Value = Value;
             this.Detail.AddRange(Detail);
+            this.Index = Index;
+            this.Length = Length;
         }
-        public DataNode(string Label, string Value, IEnumerable<string> Detail, IEnumerable<DataNode> Children)
+        public DataNode(string Label, string Value, IEnumerable<string> Detail, IEnumerable<DataNode> Children, int Index, int Length)
         {
             this.Label = Label;
             this.Value = Value;
             this.Detail.AddRange(Detail);
             this.Children.AddRange(Children);
+            this.Index = Index;
+            this.Length = Length;
         }
-        public DataNode(string Label, string Value, IEnumerable<DataNode> Children)
+        public DataNode(string Label, string Value, IEnumerable<DataNode> Children, int Index, int Length)
         {
             this.Label = Label;
             this.Value = Value;
             this.Children.AddRange(Children);
+            this.Index = Index;
+            this.Length = Length;
         }
 
         public override string ToString()
         {
             var sbResult = new StringBuilder();
-            PrintNode("", true, true, false, sbResult);
+            PrintNode("", true, true, false, true, sbResult);
 
             return sbResult.ToString();
         }
 
-        private void PrintNode(string indent, bool root, bool last, bool isVerbose, StringBuilder sbResult)
+        private void PrintNode(string indent, bool root, bool last, bool isVerbose, bool printPos, StringBuilder sbResult)
         {
             sbResult.Append(indent);
             if (root) { }
@@ -69,6 +81,7 @@ namespace KzA.HEXEH.Core.Output
                 sbResult.Append(@"├─");
                 indent += "│ ";
             }
+            if (printPos) sbResult.Append($"[{Index}:{Length}]");
             sbResult.AppendLine($"{Label}: {DisplayValue}");
             if (isVerbose && Detail.Count > 0)
             {
@@ -83,12 +96,13 @@ namespace KzA.HEXEH.Core.Output
                 }
             }
             for (int i = 0; i < Children.Count; i++)
-                Children[i].PrintNode(indent, false, i == Children.Count - 1, isVerbose, sbResult);
+                Children[i].PrintNode(indent, false, i == Children.Count - 1, isVerbose, printPos, sbResult);
         }
+
         public string ToStringVerbose()
         {
             var sbResult = new StringBuilder();
-            PrintNode("", true, true, true, sbResult);
+            PrintNode("", true, true, true, true, sbResult);
 
             return sbResult.ToString();
         }

@@ -52,7 +52,7 @@ namespace KzA.HEXEH.Core.Parser
             _currentStack = ParseStack;
             try
             {
-                var Index = Offset;
+                var index = Offset;
                 var head = new DataNode()
                 {
                     Label = _schema.Name,
@@ -65,15 +65,16 @@ namespace KzA.HEXEH.Core.Parser
                         throw new SchemaException("Missing Field Definition", _schema.Name, field);
                     var node = new DataNode()
                     {
-                        Label = field
+                        Label = field,
+                        Index = index,
                     };
                     switch (def.Parser.Type)
                     {
                         case JsonParser.JsonParserType.Basic:
-                            ParseBasic(node, def.Parser.Target, Input, ref Index, def.Parser.BigEndian, def.Parser.Length, def.Expected); break;
+                            ParseBasic(node, def.Parser.Target, Input, ref index, def.Parser.BigEndian, def.Parser.Length, def.Expected); break;
                         case JsonParser.JsonParserType.BasicConvert:
                             if (def.Parser.Conversion == null) throw new SchemaException($"No conversion provided", _schema.Name, field);
-                            ParseBasicConvert(node, def.Parser.Target, Input, ref Index, def.Parser.Conversion, def.Parser.BigEndian); break;
+                            ParseBasicConvert(node, def.Parser.Target, Input, ref index, def.Parser.Conversion, def.Parser.BigEndian); break;
                         case JsonParser.JsonParserType.NextParserBuiltin:
                         case JsonParser.JsonParserType.NextParserSchema:
                             var nextParserName = def.Parser.Target;
@@ -101,20 +102,24 @@ namespace KzA.HEXEH.Core.Parser
                                 options = ProcessOptionInterpolation(options, head.Children);
                                 nextParser.SetOptionsFromSchema(options);
                             }
-                            var parsed = nextParser.Parse(in Input, Index, out Read, ParseStack);
-                            Index += Read;
+                            var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
                             node.Value = parsed.Value;
                             node.Detail = parsed.Detail;
                             node.Children.AddRange(parsed.Children);
+                            node.Length = Read;
+                            index += Read;
                             break;
                         case JsonParser.JsonParserType.PsScript:
-                            node.Value = PsScriptRunner.RunScriptForStringResult(def.Parser.Target, Input.Slice(Index, def.Parser.Length).ToArray());
-                            Index += def.Parser.Length;
+                            node.Value = PsScriptRunner.RunScriptForStringResult(def.Parser.Target, Input.Slice(index, def.Parser.Length).ToArray());
+                            node.Length = def.Parser.Length;
+                            index += def.Parser.Length;
                             break;
                     }
                     head.Children.Add(node);
                 }
-                Read = Index - Offset;
+                Read = index - Offset;
+                head.Index = Offset;
+                head.Length = Read;
                 Log.Debug("[{_actualTypeName}] Parsed {Read} bytes", _actualTypeName, Read);
                 ParseStack!.PopEx();
                 return head;
@@ -138,6 +143,8 @@ namespace KzA.HEXEH.Core.Parser
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
                 res.Children.Add(paddingNode);
             }
@@ -167,6 +174,7 @@ namespace KzA.HEXEH.Core.Parser
             {
                 case "RAW":
                     Node.Value = BitConverter.ToString(Input.Slice(Index, Length).ToArray());
+                    Node.Length = Length;
                     Index += Length;
                     break;
                 case "BYTE":
@@ -176,6 +184,7 @@ namespace KzA.HEXEH.Core.Parser
                     {
                         throw new ParseUnexpectedValueException($"{_currentField} value {Input[Index]} does not equal to expected value {Expected}", _currentStack.Dump(), Index);
                     }
+                    Node.Length = 1;
                     Index++;
                     return;
                 case "WORD":
@@ -186,6 +195,7 @@ namespace KzA.HEXEH.Core.Parser
                     {
                         throw new ParseUnexpectedValueException($"{_currentField} value {word} does not equal to expected value {Expected}", _currentStack.Dump(), Index);
                     }
+                    Node.Length = 2;
                     Index += 2;
                     return;
                 case "DWORD":
@@ -196,6 +206,7 @@ namespace KzA.HEXEH.Core.Parser
                     {
                         throw new ParseUnexpectedValueException($"{_currentField} value {dword} does not equal to expected value {Expected}", _currentStack.Dump(), Index);
                     }
+                    Node.Length = 4;
                     Index += 4;
                     return;
                 case "QWORD":
@@ -206,6 +217,7 @@ namespace KzA.HEXEH.Core.Parser
                     {
                         throw new ParseUnexpectedValueException($"{_currentField} value {qword} does not equal to expected value {Expected}", _currentStack.Dump(), Index);
                     }
+                    Node.Length = 8;
                     Index += 8;
                     return;
             }
@@ -218,17 +230,22 @@ namespace KzA.HEXEH.Core.Parser
             switch (TypeName)
             {
                 case "BYTE":
-                    value = Input[Index++]; break;
+                    value = Input[Index++]; 
+                    Node.Length = 1;
+                    break;
                 case "WORD":
                     value = BigEndian ? BinaryPrimitives.ReadUInt16BigEndian(Input.Slice(Index, 2)) : BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Index, 2));
+                    Node.Length = 2;
                     Index += 2;
                     break;
                 case "DWORD":
                     value = BigEndian ? BinaryPrimitives.ReadUInt32BigEndian(Input.Slice(Index, 4)) : BinaryPrimitives.ReadUInt32LittleEndian(Input.Slice(Index, 4));
+                    Node.Length = 4;
                     Index += 4;
                     break;
                 case "QWORD":
                     value = BigEndian ? BinaryPrimitives.ReadUInt64BigEndian(Input.Slice(Index, 8)) : BinaryPrimitives.ReadUInt64LittleEndian(Input.Slice(Index, 8));
+                    Node.Length = 8;
                     Index += 8;
                     break;
             }

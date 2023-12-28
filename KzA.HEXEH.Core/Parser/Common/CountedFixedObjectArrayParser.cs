@@ -68,19 +68,21 @@ namespace KzA.HEXEH.Core.Parser.Common
                 var head = new DataNode()
                 {
                     Label = "Array of fixed size objects",
+                    Index = Offset
                 };
-                head.Children.Add(new DataNode("Count", count.ToString()));
-                head.Children.Add(new DataNode("Object Length", lenOfObject.ToString()));
-                Read = (lenOfObject * count) + lenOfCount;
+                head.Children.Add(new DataNode("Count", count.ToString(), Offset, lenOfCount));
+                head.Children.Add(new DataNode("Object Length", lenOfObject.ToString(), Offset, lenOfCount));
                 Offset += lenOfCount;
+                Read = (lenOfObject * count) + lenOfCount;
                 for (; count > 0; count--)
                 {
                     Log.Debug("[CountedFixedObjectArrayParser] Calling next parser {nextParserName}", nextParser.GetType().FullName);
                     head.Children.Add(nextParser.Parse(Input, Offset, lenOfObject, ParseStack));
                     Offset += lenOfObject;
                 }
-                Log.Debug("[CountedFixedObjectArrayParser] Parsed {Read} bytes", Read);
 
+                head.Length = Read;
+                Log.Debug("[CountedFixedObjectArrayParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return head;
             }
@@ -103,7 +105,10 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
+                res.Length = Length;
                 res.Children.Add(paddingNode);
             }
             if (read > Length)

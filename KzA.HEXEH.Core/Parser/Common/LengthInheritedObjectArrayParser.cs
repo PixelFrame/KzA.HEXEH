@@ -47,6 +47,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                 var head = new DataNode()
                 {
                     Label = "Array of objects with length inherited",
+                    Index = Offset,
                 };
                 var start = Offset;
 
@@ -59,6 +60,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                     }
                 }
                 Read = Offset - start;
+                head.Length = Read;
                 Log.Debug("[LengthInheritedObjectParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return head;
@@ -82,7 +84,10 @@ namespace KzA.HEXEH.Core.Parser.Common
                 {
                     Label = "Padding (Unread Bytes)",
                     Value = BitConverter.ToString(Input.Slice(Offset + read, Length - read).ToArray()),
+                    Index = Offset + read,
+                    Length = Length - read,
                 };
+                res.Length = Length;
                 res.Children.Add(paddingNode);
             }
             if (read > Length)
