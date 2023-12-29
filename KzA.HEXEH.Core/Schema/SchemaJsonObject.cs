@@ -27,17 +27,22 @@
         {
             Basic = 0,
             BasicConvert = 1,
-            NextParserBuiltin = 10,
-            NextParserSchema = 11,
-            PsScript = 20,
+            NextParser = 10,
+            NextParserExtension = 15,
         }
 
+        // General
         public JsonParserType Type { get; set; }
         public string Target { get; set; } = string.Empty;
+        public Dictionary<string, string>? Options { get; set; }
+
+        // BasicConvert
         public ValueConversion? Conversion { get; set; } = new();
         public bool BigEndian { get; set; } = false;
         public int Length { get; set; } = -1;
-        public Dictionary<string, string>? Options { get; set; }
+
+        // Extension
+        public string ExtensionNamespace { get; set; } = string.Empty;
     }
 
     internal class ValueConversion

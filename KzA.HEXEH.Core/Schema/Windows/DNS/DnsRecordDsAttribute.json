@@ -74,9 +74,13 @@
       {
         "Name": "TimeStamp",
         "Parser": {
-          "Type": 20,
-          "Target": "$hours = [BitConverter]::ToUInt32($value, 0); return [datetime]::Parse('1601/1/1 0:0:0').AddHours($hours)",
-          "Length": 4
+          "Type": 10,
+          "Target": "Common.ElapsedTime",
+          "Options": {
+            "StartTime": "1601/1/1 0:0:0",
+            "Unit": "h",
+            "Length": "4"
+          }
         }
       },
       {

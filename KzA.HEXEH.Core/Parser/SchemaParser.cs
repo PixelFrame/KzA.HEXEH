@@ -1,6 +1,5 @@
 ﻿using KzA.HEXEH.Core.Output;
 using KzA.HEXEH.Core.Schema;
-using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Buffers.Binary;
 using System.Text.RegularExpressions;
@@ -75,8 +74,7 @@ namespace KzA.HEXEH.Core.Parser
                         case JsonParser.JsonParserType.BasicConvert:
                             if (def.Parser.Conversion == null) throw new SchemaException($"No conversion provided", _schema.Name, field);
                             ParseBasicConvert(node, def.Parser.Target, Input, ref index, def.Parser.Conversion, def.Parser.BigEndian); break;
-                        case JsonParser.JsonParserType.NextParserBuiltin:
-                        case JsonParser.JsonParserType.NextParserSchema:
+                        case JsonParser.JsonParserType.NextParser:
                             var nextParserName = def.Parser.Target;
                             try
                             {
@@ -94,7 +92,7 @@ namespace KzA.HEXEH.Core.Parser
                             {
                                 throw new SchemaException($"Unable to create interpolation parser {nextParserName}", _schema.Name, field, e);
                             }
-                            var nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, def.Parser.Type == JsonParser.JsonParserType.NextParserSchema);
+                            var nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, true);
                             Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
                             if (def.Parser.Options != null)
                             {
@@ -110,10 +108,22 @@ namespace KzA.HEXEH.Core.Parser
                             node.Length = Read;
                             index += Read;
                             break;
-                        case JsonParser.JsonParserType.PsScript:
-                            node.Value = PsScriptRunner.RunScriptForStringResult(def.Parser.Target, Input.Slice(index, def.Parser.Length).ToArray());
-                            node.Length = def.Parser.Length;
-                            index += def.Parser.Length;
+                        case JsonParser.JsonParserType.NextParserExtension:
+                            nextParser = ParserManager.InstantiateParserByFullName($"{def.Parser.ExtensionNamespace}.{def.Parser.Target}");
+                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                            if (def.Parser.Options != null)
+                            {
+                                var options = new Dictionary<string, string>(def.Parser.Options);
+                                ProcessOptionCondition(options, head.Children);
+                                ProcessOptionInterpolation(options, head.Children);
+                                nextParser.SetOptionsFromSchema(options);
+                            }
+                            parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
+                            node.Value = parsed.Value;
+                            node.Detail = parsed.Detail;
+                            node.Children.AddRange(parsed.Children);
+                            node.Length = Read;
+                            index += Read;
                             break;
                     }
                     head.Children.Add(node);

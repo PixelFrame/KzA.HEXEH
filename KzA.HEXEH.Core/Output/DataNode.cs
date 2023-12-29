@@ -14,8 +14,8 @@ namespace KzA.HEXEH.Core.Output
         }
         public List<string> Detail { get; set; } = [];
         public List<DataNode> Children { get; set; } = [];
-        public int Index = -1;
-        public int Length = -1;
+        public int Index { get; set; } = -1;
+        public int Length { get; set; } = -1;
 
         public DataNode() { }
         public DataNode(string Label, string Value, int Index, int Length)

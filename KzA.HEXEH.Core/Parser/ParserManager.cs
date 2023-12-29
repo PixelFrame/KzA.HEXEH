@@ -68,6 +68,14 @@ namespace KzA.HEXEH.Core.Parser
                 throw new ParserFindException($"Parser with relative name {Name} is not found, IncludeSchema={IncludeSchema}");
         }
 
+        public static Type FindParserByFullName(string Name)
+        {
+            Log.Information($"[ParserManager] Finding parser with full name {Name}Parser");
+            var found = AvailableParsers.Where(p => p.FullName == ($"{Name}Parser")).FirstOrDefault();
+            return found ??
+                throw new ParserFindException($"Parser with full name {Name} is not found");
+        }
+
         public static IParser InstantiateParserByBaseName(string Name, Dictionary<string, object>? Options = null)
         {
             var t = FindParserByBaseName(Name);
@@ -85,6 +93,20 @@ namespace KzA.HEXEH.Core.Parser
         public static IParser InstantiateParserByRelativeName(string Name, bool IncludeSchema, Dictionary<string, object>? Options = null)
         {
             var t = FindParserByRelativeName(Name, IncludeSchema);
+            Log.Information($"[ParserManager] Creating parser instance of {t.FullName}");
+            var p = Activator.CreateInstance(t) as IParser ??
+                throw new ParserFindException($"Cannot create instance of {t.FullName}");
+            if (Options != null)
+            {
+                Log.Information($"[ParserManager] Setting options for parser instance of {t.FullName}");
+                p.SetOptions(Options);
+            }
+            return p;
+        }
+
+        public static IParser InstantiateParserByFullName(string Name, Dictionary<string, object>? Options = null)
+        {
+            var t = FindParserByFullName(Name);
             Log.Information($"[ParserManager] Creating parser instance of {t.FullName}");
             var p = Activator.CreateInstance(t) as IParser ??
                 throw new ParserFindException($"Cannot create instance of {t.FullName}");

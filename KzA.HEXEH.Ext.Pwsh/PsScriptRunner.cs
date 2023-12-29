@@ -1,12 +1,8 @@
-﻿using Serilog;
-using System.Management.Automation;
+﻿using System.Management.Automation;
 using System.Management.Automation.Runspaces;
-using System.Runtime.CompilerServices;
 using System.Text;
 
-[assembly: InternalsVisibleTo("KzA.HEXEH.Test")]
-
-namespace KzA.HEXEH.Core.Utility
+namespace KzA.HEXEH.Ext.Pwsh
 {
     public static class PsScriptRunner
     {
@@ -28,7 +24,6 @@ namespace KzA.HEXEH.Core.Utility
             ps.Runspace = rs;
             rs.Open();
             var funcScript = PsFuncHeader + Script + PsFuncFooter;
-            Log.Debug($"[PsScriptRunner] PsScriptConvert function{Environment.NewLine}{{funcScript}}", funcScript);
             ps.AddScript(funcScript).AddStatement().AddCommand("PsScriptConvert").AddArgument(Value);
             var result = ps.Invoke<string>();
             if (ps.HadErrors)
