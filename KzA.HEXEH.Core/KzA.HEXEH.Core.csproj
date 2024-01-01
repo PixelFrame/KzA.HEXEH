@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KzA.HEXEH.Base\KzA.HEXEH.Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Schema\DnsCountName.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

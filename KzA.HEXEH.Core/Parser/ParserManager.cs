@@ -1,4 +1,5 @@
-﻿using KzA.HEXEH.Core.Schema;
+﻿using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Schema;
 using Serilog;
 
 namespace KzA.HEXEH.Core.Parser
@@ -11,8 +12,8 @@ namespace KzA.HEXEH.Core.Parser
             Log.Information("[ParserManager] Initialized");
         }
 
-        private static IEnumerable<Type> availableParsers = [];
-        public static IEnumerable<Type> AvailableParsers
+        private static IList<Type> availableParsers = [];
+        public static IList<Type> AvailableParsers
         {
             get => availableParsers;
         }
@@ -38,7 +39,8 @@ namespace KzA.HEXEH.Core.Parser
                    .GetAssemblies()
                    .Where(a => a.FullName!.StartsWith("KzA.HEXEH.Core"))
                    .SelectMany(assembly => assembly.GetTypes())
-                   .Where(t => desiredType.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
+                   .Where(t => desiredType.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                   .ToList();
             Log.Information("[ParserManager] Parsers refresh completed");
         }
 

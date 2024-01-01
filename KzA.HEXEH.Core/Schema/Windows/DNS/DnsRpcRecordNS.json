@@ -6,7 +6,7 @@
       {
         "Name": "NS",
         "Parser": {
-          "Type": 11,
+          "Type": 10,
           "Target": "Windows.DNS.DnsCountName"
         }
       }

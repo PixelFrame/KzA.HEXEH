@@ -96,11 +96,5 @@ namespace KzA.HEXEH.Test
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
         }
-
-        [Fact]
-        public void TestAvailableParsers()
-        {
-            Output.WriteLine(ParserManager.AvailableParsers.Select(x => x.FullName).Aggregate((x, y) => $"{x}{Environment.NewLine}{y}"));
-        }
     }
 }

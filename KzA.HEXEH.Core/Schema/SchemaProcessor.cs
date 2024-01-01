@@ -1,4 +1,5 @@
-﻿using KzA.HEXEH.Core.Parser;
+﻿using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Parser;
 using Serilog;
 using System.Reflection;
 using System.Reflection.Emit;

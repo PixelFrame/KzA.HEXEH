@@ -1,35 +1,40 @@
-﻿using KzA.HEXEH.Core.Output;
-using KzA.HEXEH.Core.Parser;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
 
 namespace KzA.HEXEH.Ext.Pwsh
 {
-    internal class PwshParser : ParserBase
+    public class PwshParser : ParserBase
     {
-        public override ParserType Type => throw new NotImplementedException();
+        public override ParserType Type => ParserType.Extension;
+        private string script = string.Empty;
 
         public override Dictionary<string, Type> GetOptions()
         {
-            throw new NotImplementedException();
+            return new()
+            {
+                { "Script", typeof(string) }
+            };
         }
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
-            throw new NotImplementedException();
+            return Parse(Input, 0, out _, ParseStack);
         }
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, out int Read, Stack<string>? ParseStack = null)
         {
-            throw new NotImplementedException();
+            return Parse(Input, 0, out Read, ParseStack);
         }
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, Stack<string>? ParseStack = null)
         {
-            throw new NotImplementedException();
+            return Parse(Input, Offset, out _, ParseStack);
         }
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
-            throw new NotImplementedException();
+            var result = PsScriptRunner.RunScriptForResult(script, Input[Offset..].ToArray(), Offset, out Read);
+            return result;
         }
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
@@ -39,12 +44,35 @@ namespace KzA.HEXEH.Ext.Pwsh
 
         public override void SetOptions(Dictionary<string, object> Options)
         {
-            throw new NotImplementedException();
+            if (Options.TryGetValue("Script", out var scriptObj))
+            {
+                if (scriptObj is string scriptStr)
+                {
+                    script = scriptStr;
+                    //Log.Debug("[PwshParser] Set option Script to {script}", script);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: Script");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Script not provided");
+            }
         }
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            throw new NotImplementedException();
+            if (Options.TryGetValue("Script", out var scriptStr))
+            {
+                script = scriptStr;
+                //Log.Debug("[PwshParser] Set option Script to {script}", script);
+            }
+            else
+            {
+                throw new ArgumentException("Script not provided");
+            }
         }
     }
 }

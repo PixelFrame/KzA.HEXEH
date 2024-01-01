@@ -1,6 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
 
-namespace KzA.HEXEH.Core.Parser
+namespace KzA.HEXEH.Base.Parser
 {
     public abstract class ParserBase : IParser
     {

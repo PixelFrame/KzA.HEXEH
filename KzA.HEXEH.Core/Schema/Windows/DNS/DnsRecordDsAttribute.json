@@ -86,7 +86,7 @@
       {
         "Name": "Data",
         "Parser": {
-          "Type": 11,
+          "Type": 10,
           "Target": "Windows.DNS.DnsRpcRecord{Type}"
         }
       }

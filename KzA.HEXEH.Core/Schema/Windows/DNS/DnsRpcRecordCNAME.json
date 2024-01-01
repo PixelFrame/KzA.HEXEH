@@ -6,7 +6,7 @@
       {
         "Name": "CNAME",
         "Parser": {
-          "Type": 11,
+          "Type": 10,
           "Target": "Windows.DNS.DnsCountName"
         }
       }

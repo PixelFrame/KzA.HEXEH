@@ -1,7 +1,11 @@
-﻿using KzA.HEXEH.Core.Schema;
+﻿using KzA.HEXEH.Core.Extension;
+using KzA.HEXEH.Core.Schema;
 using Serilog;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+
+[assembly:InternalsVisibleTo("KzA.HEXEH.Test")]
 
 namespace KzA.HEXEH.Core
 {
@@ -32,6 +36,10 @@ namespace KzA.HEXEH.Core
             Log.Debug("[Global] Creating dynamic parsers");
             SchemaProcessor.InitializeSchemaParsers();
             Log.Debug("[Global] Created dynamic parsers");
+
+            Log.Debug("[Global] Loading extensions");
+            ExtensionManager.LoadExtensions();
+            Log.Debug("[Global] Loaded extensions");
 
             Log.Information("[Global] HEXEH Initialized");
             IsInitialized = true;

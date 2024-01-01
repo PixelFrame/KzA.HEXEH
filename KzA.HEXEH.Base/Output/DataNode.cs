@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace KzA.HEXEH.Core.Output
+namespace KzA.HEXEH.Base.Output
 {
     public class DataNode
     {

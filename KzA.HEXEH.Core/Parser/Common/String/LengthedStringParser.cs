@@ -1,4 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Text;
 
@@ -6,7 +8,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
 {
     public class LengthedStringParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
         private static readonly int[] validLen = { 1, 2, 4, 8 };
         private int _lenOfLen;
         private int lenOfLen

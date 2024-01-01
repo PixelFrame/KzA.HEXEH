@@ -46,14 +46,14 @@
       {
         "Name": "PrimaryServer",
         "Parser": {
-          "Type": 11,
+          "Type": 10,
           "Target": "Windows.DNS.DnsCountName"
         }
       },
       {
         "Name": "ZoneAdministratorEmail",
         "Parser": {
-          "Type": 11,
+          "Type": 10,
           "Target": "Windows.DNS.DnsCountName"
         }
       }

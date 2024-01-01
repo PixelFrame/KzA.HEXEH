@@ -1,6 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
 
-namespace KzA.HEXEH.Core.Parser
+namespace KzA.HEXEH.Base.Parser
 {
     public interface IParser
     {
@@ -17,8 +17,8 @@ namespace KzA.HEXEH.Core.Parser
 
     public enum ParserType
     {
-        Hardcoded,
-        SchemaInternal,
-        SchemaExternal
+        Internal,
+        Schema,
+        Extension
     }
 }

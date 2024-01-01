@@ -1,4 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Buffers.Binary;
 
@@ -6,7 +8,7 @@ namespace KzA.HEXEH.Core.Parser.Windows
 {
     internal class FILETIMEParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
 
         public override Dictionary<string, Type> GetOptions()
         {

@@ -1,4 +1,4 @@
-using KzA.HEXEH.Core.Output;
+using KzA.HEXEH.Base.Output;
 using Xunit.Abstractions;
 
 namespace KzA.HEXEH.Test;

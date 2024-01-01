@@ -1,4 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Buffers.Binary;
 
@@ -6,7 +8,7 @@ namespace KzA.HEXEH.Core.Parser.Common
 {
     public class ElapsedTimeParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
 
         private DateTime startTime = DateTime.UnixEpoch;
         private readonly string[] VALID_UNITS = ["d", "h", "m", "s", "us", "ms", "t"];

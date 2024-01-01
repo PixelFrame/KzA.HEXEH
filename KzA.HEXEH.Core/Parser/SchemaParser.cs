@@ -1,14 +1,16 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Core.Utility;
 using KzA.HEXEH.Core.Schema;
 using Serilog;
 using System.Buffers.Binary;
 using System.Text.RegularExpressions;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Base.Output;
 
 namespace KzA.HEXEH.Core.Parser
 {
     public abstract partial class SchemaParser : ParserBase
     {
-        public override ParserType Type => ParserType.SchemaInternal;
+        public override ParserType Type => ParserType.Schema;
         private SchemaJsonObject _schema;
         private IEnumerable<Type> _dynamicEnums;
         private readonly string[] ValidBaseTypes = ["BYTE", "WORD", "DWORD", "QWORD", "RAW"];

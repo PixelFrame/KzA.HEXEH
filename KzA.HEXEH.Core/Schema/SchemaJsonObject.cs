@@ -28,7 +28,7 @@
             Basic = 0,
             BasicConvert = 1,
             NextParser = 10,
-            NextParserExtension = 15,
+            NextParserExtension = 20,
         }
 
         // General

@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using System.Text;
 
-namespace KzA.HEXEH.Core.Output
+namespace KzA.HEXEH.Core.Utility
 {
     internal static class StackExtension
     {

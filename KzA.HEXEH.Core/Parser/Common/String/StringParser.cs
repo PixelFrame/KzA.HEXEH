@@ -1,4 +1,6 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Text;
 
@@ -6,7 +8,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
 {
     public class StringParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
         private Encoding encoding = Encoding.UTF8;
 
         public override Dictionary<string, Type> GetOptions()

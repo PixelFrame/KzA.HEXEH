@@ -1,11 +1,13 @@
-﻿using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 
 namespace KzA.HEXEH.Core.Parser.Common
 {
     internal class GuidParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
 
         public override Dictionary<string, Type> GetOptions()
         {

@@ -1,5 +1,7 @@
-﻿using KzA.HEXEH.Core.DataStructure.Networking;
-using KzA.HEXEH.Core.Output;
+﻿using KzA.HEXEH.Base.Output;
+using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.DataStructure.Networking;
+using KzA.HEXEH.Core.Utility;
 using Serilog;
 using System.Runtime.InteropServices;
 
@@ -7,7 +9,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
 {
     public class IPv6AddrParser : ParserBase
     {
-        public override ParserType Type => ParserType.Hardcoded;
+        public override ParserType Type => ParserType.Internal;
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, Stack<string>? ParseStack = null)
         {
