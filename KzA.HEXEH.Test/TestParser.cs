@@ -96,5 +96,14 @@ namespace KzA.HEXEH.Test
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
         }
+
+        [Fact]
+        public void TestUnixTimestamp()
+        {
+            var data = new byte[] { 0xaa, 0xbb, 0xcc, 0xdd };
+            var parser = new UnixTimeParser();
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
     }
 }

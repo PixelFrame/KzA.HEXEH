@@ -45,7 +45,7 @@ namespace KzA.HEXEH.Core.Parser.Windows
             {
                 if (Length != 8) throw new ArgumentException("FILETIME length must be 8");
 
-                var filetime = BinaryPrimitives.ReadInt64LittleEndian(Input.Slice(Offset, 8));
+                var filetime = BigEndian ? BinaryPrimitives.ReadInt64BigEndian(Input.Slice(Offset, 8)) : BinaryPrimitives.ReadInt64LittleEndian(Input.Slice(Offset, 8));
                 var datetime = DateTime.FromFileTime(filetime);
                 var res = new DataNode()
                 {
@@ -66,12 +66,12 @@ namespace KzA.HEXEH.Core.Parser.Windows
 
         public override void SetOptions(Dictionary<string, object> Options)
         {
-            throw new NotSupportedException();
+            base.SetOptions(Options);
         }
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
         {
-            throw new NotSupportedException();
+            base.SetOptionsFromSchema(Options);
         }
     }
 }

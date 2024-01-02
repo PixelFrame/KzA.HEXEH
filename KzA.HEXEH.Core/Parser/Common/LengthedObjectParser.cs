@@ -57,8 +57,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                 switch (lenOfLen)
                 {
                     case 1: len = Input[Offset]; break;
-                    case 2: len = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                    case 4: len = BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                    case 2: len = BigEndian ? BinaryPrimitives.ReadUInt16BigEndian(Input.Slice(Offset, 2)) : BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                    case 4: len = BigEndian ? BinaryPrimitives.ReadInt32BigEndian(Input.Slice(Offset, 4)) : BinaryPrimitives.ReadInt32LittleEndian(Input.Slice(Offset, 4)); break;
                 }
                 var children = nextParser.Parse(Input, Offset + lenOfLen, len, ParseStack);
                 var head = new DataNode()
@@ -169,6 +169,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                     throw new ArgumentException("Invalid Option: ParserOptions");
                 }
             }
+            base.SetOptions(Options);
         }
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
@@ -222,6 +223,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                     throw new ArgumentException("Invalid Option: ParserOptions");
                 }
             }
+
+            base.SetOptionsFromSchema(Options);
         }
     }
 }

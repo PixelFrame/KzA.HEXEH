@@ -1,5 +1,6 @@
 ﻿using KzA.HEXEH.Base.Output;
 using KzA.HEXEH.Base.Parser;
+using Serilog;
 
 namespace KzA.HEXEH.Ext.Pwsh
 {
@@ -33,7 +34,9 @@ namespace KzA.HEXEH.Ext.Pwsh
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, out int Read, Stack<string>? ParseStack = null)
         {
+            Log.Debug("[PwshParser] Start parsing at {Offset}", Offset);
             var result = PsScriptRunner.RunScriptForResult(script, Input[Offset..].ToArray(), Offset, out Read);
+            Log.Debug("[PwshParser] Parsed {Read} bytes", Read);
             return result;
         }
 
@@ -49,7 +52,7 @@ namespace KzA.HEXEH.Ext.Pwsh
                 if (scriptObj is string scriptStr)
                 {
                     script = scriptStr;
-                    //Log.Debug("[PwshParser] Set option Script to {script}", script);
+                    Log.Debug("[PwshParser] Set option Script to {script}", script);
                 }
                 else
                 {
@@ -67,7 +70,7 @@ namespace KzA.HEXEH.Ext.Pwsh
             if (Options.TryGetValue("Script", out var scriptStr))
             {
                 script = scriptStr;
-                //Log.Debug("[PwshParser] Set option Script to {script}", script);
+                Log.Debug("[PwshParser] Set option Script to {script}", script);
             }
             else
             {

@@ -59,9 +59,9 @@ namespace KzA.HEXEH.Core.Parser.Common
                 switch (length)
                 {
                     case 1: value = Input[Offset]; break;
-                    case 2: value = BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
-                    case 4: value = BinaryPrimitives.ReadUInt32LittleEndian(Input.Slice(Offset, 4)); break;
-                    case 8: value = BinaryPrimitives.ReadInt64LittleEndian(Input.Slice(Offset, 8)); break;
+                    case 2: value = BigEndian ? BinaryPrimitives.ReadUInt16BigEndian(Input.Slice(Offset, 2)) : BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                    case 4: value = BigEndian ? BinaryPrimitives.ReadUInt32BigEndian(Input.Slice(Offset, 4)) : BinaryPrimitives.ReadUInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                    case 8: value = BigEndian ? BinaryPrimitives.ReadInt64BigEndian(Input.Slice(Offset, 8)) : BinaryPrimitives.ReadInt64LittleEndian(Input.Slice(Offset, 8)); break;
                 }
 
                 TimeSpan ts = TimeSpan.Zero;
@@ -78,8 +78,8 @@ namespace KzA.HEXEH.Core.Parser.Common
 
                 var t = startTime.Add(ts);
 
-                Log.Debug($"[ElapsedTimeParser] Parsed {length} bytes");
                 Read = length;
+                Log.Debug("[ElapsedTimeParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return new DataNode()
                 {
@@ -170,6 +170,8 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 throw new ArgumentException("Length not provided");
             }
+
+            base.SetOptions(Options);
         }
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
@@ -215,6 +217,8 @@ namespace KzA.HEXEH.Core.Parser.Common
             {
                 throw new ArgumentException("Length not provided");
             }
+
+            base.SetOptionsFromSchema(Options);
         }
     }
 }
