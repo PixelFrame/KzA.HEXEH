@@ -10,8 +10,7 @@ namespace KzA.HEXEH.Core.Extension
     {
         internal static void LoadExtensions()
         {
-            var dir = new DirectoryInfo("./Extension");
-            var extdirs = dir.EnumerateDirectories();
+            var extdirs = Global.FileAccessor.EnumExtensionDirs();
             Log.Debug("[ExtensionManager] Found {count} extension dir(s)", extdirs.Count());
             foreach (var extdir in extdirs)
             {

@@ -1,11 +1,13 @@
-﻿using KzA.HEXEH.Core.Extension;
+﻿using KzA.HEXEH.Base.FileAccess;
+using KzA.HEXEH.Core.Extension;
+using KzA.HEXEH.Core.FileAccess;
 using KzA.HEXEH.Core.Schema;
 using Serilog;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("KzA.HEXEH.Test")]
+[assembly: InternalsVisibleTo("KzA.HEXEH.Test")]
 
 namespace KzA.HEXEH.Core
 {
@@ -16,10 +18,11 @@ namespace KzA.HEXEH.Core
         internal static int LoopMax = 65535;
         internal static ModuleBuilder DynamicModule;
         internal static bool IsInitialized = false;
+        internal static IFileAccess FileAccessor = new LocalFileAccess();
 
         static Global()
         {
-            Log.Information(@"[Global] HEXEH Initializing
+            Log.Information(@"[Global] HEXEH START
  __  __     ______     __  __     ______     __  __    
 /\ \_\ \   /\  ___\   /\_\_\_\   /\  ___\   /\ \_\ \   
 \ \  __ \  \ \  __\   \/_/\_\/_  \ \  __\   \ \  __ \  
@@ -32,6 +35,16 @@ namespace KzA.HEXEH.Core
             var ab = AssemblyBuilder.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndCollect);
             DynamicModule = ab.DefineDynamicModule("KzA.HEXEH.Core.Dynamic");
             Log.Debug("[Global] Created dynamic assembly and module");
+        }
+
+        public static void Configure(IFileAccess fileAccess)
+        {
+            FileAccessor = fileAccess;
+        }
+
+        internal static void Initialize()
+        {
+            Log.Information("[Global] HEXEH Initializing parsers and extensions");
 
             Log.Debug("[Global] Creating dynamic parsers");
             SchemaProcessor.InitializeSchemaParsers();
@@ -44,11 +57,5 @@ namespace KzA.HEXEH.Core
             Log.Information("[Global] HEXEH Initialized");
             IsInitialized = true;
         }
-
-        public static void Configure()
-        {
-        }
-
-        public static void Initialize() { /* Nothing to be done here as we will do stuff in constructor */ }
     }
 }

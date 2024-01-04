@@ -1,4 +1,5 @@
-﻿using KzA.HEXEH.Base.Parser;
+﻿using KzA.HEXEH.Base.FileAccess;
+using KzA.HEXEH.Base.Parser;
 using KzA.HEXEH.Core.Parser;
 using Serilog;
 using System.Reflection;
@@ -14,19 +15,19 @@ namespace KzA.HEXEH.Core.Schema
         {
             if (!ParserType.IsAssignableTo(typeof(IParser)))
                 throw new ArgumentException($"{ParserType.FullName} is not a schema parser");
-            var schemaName = GenerateSchemaFilePath(ParserType);
-            if (ParserManager.CreatedSchema.TryGetValue(schemaName, out SchemaJsonObject? value))
+            var schemaFile = GetSchemaFromAttribute(ParserType);
+            if (ParserManager.CreatedSchema.TryGetValue(schemaFile.FullPath, out SchemaJsonObject? value))
             {
-                Log.Debug("[SchemaProcessor] SchemaJsonObject {schemaName} existing", schemaName);
+                Log.Debug("[SchemaProcessor] SchemaJsonObject {schema} existing", schemaFile.FullPath);
                 return value;
             }
-            Log.Debug("[SchemaProcessor] Loading schema {schemaName}", schemaName);
-            var schemaJsonContent = File.ReadAllText($"./Schema/{schemaName}");
+            Log.Debug("[SchemaProcessor] Loading schema {schema}", schemaFile.FullPath);
+            var schemaJsonContent = Global.FileAccessor.ReadSchemaContent(schemaFile);
             Log.Verbose($"[SchemaProcessor] Schema content:{Environment.NewLine}{{schemaJsonContent}}", schemaJsonContent);
-            var schema = JsonSerializer.Deserialize<SchemaJsonObject>(schemaJsonContent)!;
-            ParserManager.CreatedSchema.Add(schemaName, schema);
-            Log.Debug("[SchemaProcessor] Loaded schema {schemaName}", schemaName);
-            return schema;
+            var schemaObj = JsonSerializer.Deserialize<SchemaJsonObject>(schemaJsonContent)!;
+            ParserManager.CreatedSchema.Add(schemaFile.FullPath, schemaObj);
+            Log.Debug("[SchemaProcessor] Loaded schema {schema}", schemaFile.FullPath);
+            return schemaObj;
         }
 
         internal static IEnumerable<Type> CreateEnums(SchemaJsonObject schemaObj)
@@ -85,42 +86,49 @@ namespace KzA.HEXEH.Core.Schema
 
         internal static void InitializeSchemaParsers()
         {
-            var dir = new DirectoryInfo("./Schema");
-            var schemaFiles = dir.EnumerateFiles("*.json", SearchOption.AllDirectories);
+            var schemaFiles = Global.FileAccessor.EnumSchemas();
             foreach (var schemaFile in schemaFiles)
             {
                 var typeName = ProcessSchemaFileName(schemaFile);
                 if (typeName == null)
                 {
-                    Log.Warning("[SchemaProcessor] Invalid schema name {schemaFile}, skipping", schemaFile);
+                    Log.Warning("[SchemaProcessor] Invalid schema name {schemaFile}, skipping", schemaFile.FullPath);
                     continue;
                 }
-                Log.Debug("[SchemaProcessor] Creating Parser for schema {schemaFile}, type name {typeName}", schemaFile, typeName);
+                Log.Debug("[SchemaProcessor] Creating Parser for schema {schemaFile}, type name {typeName}", schemaFile.FullPath, typeName);
                 var tb = Global.DynamicModule.DefineType(
                         typeName,
                         TypeAttributes.Public | TypeAttributes.Class,
                         typeof(SchemaParser));
+                var attribCtorParams = new Type[] { typeof(string), typeof(string), typeof(string), };
+                var ctorInfo = typeof(SchemaFileAttribute).GetConstructor(attribCtorParams)!;
+                var attribBuilder = new CustomAttributeBuilder(ctorInfo,
+                               new object[] { schemaFile.Root, schemaFile.Name, schemaFile.RelativePath });
+                tb.SetCustomAttribute(attribBuilder);
                 _ = tb.CreateType();
-                Log.Debug("[SchemaProcessor] Created Parser for schema {schemaFile}", schemaFile);
+                Log.Debug("[SchemaProcessor] Created Parser for schema {schemaFile}", schemaFile.FullPath);
             }
             ParserManager.RefreshParsers();
         }
 
-        private static string GenerateSchemaFilePath(Type ParserType)
+        private static SchemaFile GetSchemaFromAttribute(Type ParserType)
         {
-            var typeName = ParserType.FullName![30..];
-            typeName = typeName.Remove(typeName.Length - 6);
-            return typeName.Replace('.', Path.DirectorySeparatorChar) + ".json";
+            // Somehow ParserType.GetCustomAttributes() always return an empty array...
+            var file = new SchemaFile();
+            var args = ParserType.CustomAttributes.First().ConstructorArguments.ToArray();
+            file.Root = (string)args[0].Value!;
+            file.Name = (string)args[1].Value!;
+            file.RelativePath = (string)args[2].Value!;
+            return file;
         }
 
-        private static string? ProcessSchemaFileName(FileInfo schemaFile)
+        private static string? ProcessSchemaFileName(SchemaFile schemaFile)
         {
             if (!TypeNameRegex().Match(schemaFile.Name).Success)
             {
                 return null;
             }
-            var relative = Path.GetRelativePath("./Schema", schemaFile.FullName);
-            var typeName = relative.Remove(relative.Length - 5).Replace(Path.DirectorySeparatorChar, '.');
+            var typeName = schemaFile.RelativePath.Remove(schemaFile.RelativePath.Length - 5).Replace(Path.DirectorySeparatorChar, '.');
             var fullTypeName = "KzA.HEXEH.Core.Dynamic.Parser." + typeName + "Parser";
             return fullTypeName;
         }
