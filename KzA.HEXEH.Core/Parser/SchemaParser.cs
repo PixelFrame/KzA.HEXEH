@@ -189,7 +189,7 @@ namespace KzA.HEXEH.Core.Parser
                     Node.Value = BitConverter.ToString(Input.Slice(Index, Length).ToArray());
                     Node.Length = Length;
                     Index += Length;
-                    break;
+                    return;
                 case "BYTE":
                     Node.Value = Input[Index].ToString();
                     Node.DisplayValue = $"{Input[Index]} (0x{Input[Index]:X})";

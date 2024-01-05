@@ -110,6 +110,9 @@
     <None Update="Schema\Windows\DNS\DnsRpcRecordSOA.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Schema\Windows\ProxyConfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
