@@ -8,6 +8,13 @@
     <FileVersion>$(AssemblyVersion)</FileVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>KzA.HEXEH.Core</PackageId>
+    <Version>$(AssemblyVersion)</Version>
+    <Authors>KzA</Authors>
+    <Company>KzA</Company>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
@@ -99,6 +106,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordCNAME.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Windows\DNS\DnsRpcRecordTXT.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordNS.json">

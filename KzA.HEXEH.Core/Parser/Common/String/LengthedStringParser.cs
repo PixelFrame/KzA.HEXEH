@@ -10,6 +10,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
     {
         public override ParserType Type => ParserType.Internal;
         private static readonly int[] validLen = { 1, 2, 4, 8 };
+        private bool compact = true;
         private int _lenOfLen;
         private int lenOfLen
         {
@@ -28,6 +29,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             {
                 { "LenOfLen", typeof(int) },
                 { "Encoding", typeof(Encoding) },
+                { "Compact?", typeof(bool) },
             };
         }
 
@@ -61,8 +63,13 @@ namespace KzA.HEXEH.Core.Parser.Common.String
                     {"ParserOptions", stringParserOpt },
                 });
                 var innerResult = innerParser.Parse(Input, Offset, out Read, ParseStack);
-                innerResult.Label = "String with length specified";
+                innerResult.Label = compact ? "String" : "String with length specified";
                 innerResult.Value = innerResult.Children[1].Value;
+                innerResult.DisplayValue = $"({innerResult.Children[0].Value}){innerResult.Children[1].Value}";
+                if (compact)
+                {
+                    innerResult.Children.Clear();
+                }
                 Log.Debug("[LengthedStringParser] Parsed {Read} bytes", Read);
                 ParseStack!.PopEx();
                 return innerResult;
@@ -93,8 +100,13 @@ namespace KzA.HEXEH.Core.Parser.Common.String
                     {"ParserOptions", stringParserOpt },
                 });
                 var innerResult = innerParser.Parse(Input, Offset, Length, ParseStack);
-                innerResult.Label = "String with length specified";
+                innerResult.Label = compact ? "String" : "String with length specified";
                 innerResult.Value = innerResult.Children[1].Value;
+                innerResult.DisplayValue = $"({innerResult.Children[0].Value}){innerResult.Children[1].Value}";
+                if (compact)
+                {
+                    innerResult.Children.Clear();
+                }
                 Log.Debug("[LengthedStringParser] Parsed {Length} bytes", Length);
                 ParseStack!.PopEx();
                 return innerResult;
@@ -123,6 +135,7 @@ namespace KzA.HEXEH.Core.Parser.Common.String
                     throw new ArgumentException("Invalid Option: LenOfLen");
                 }
             }
+
             if (Options.TryGetValue("Encoding", out var encodingObj))
             {
                 if (encodingObj is Encoding _encoding)
@@ -133,6 +146,19 @@ namespace KzA.HEXEH.Core.Parser.Common.String
                 else
                 {
                     throw new ArgumentException("Invalid Option: Encoding");
+                }
+            }
+
+            if (Options.TryGetValue("Compact", out var compactObj))
+            {
+                if (compactObj is bool _compact)
+                {
+                    compact = _compact;
+                    Log.Debug("[LengthedStringParser] Set option Compact to {compact}", compact);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: Compact");
                 }
             }
         }
@@ -160,6 +186,19 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             else
             {
                 throw new ArgumentException("Encoding not provided");
+            }
+
+            if (Options.TryGetValue("Compact", out var compactStr))
+            {
+                if (bool.TryParse(compactStr, out var _compact))
+                {
+                    compact = _compact;
+                    Log.Debug("[LengthedStringParser] Set option Compact to {compact}", compact);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: Compact");
+                }
             }
         }
     }

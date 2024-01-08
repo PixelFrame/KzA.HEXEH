@@ -21,7 +21,7 @@
           "Target": "Common.LengthedObject",
           "Options": {
             "LenOfLen": "4",
-            "ObjectParser": "[Name;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]",
+            "ObjectParser": "[Name.Value;\\siteroot:Windows.DFSN.SiteInformation;:Windows.DFSN.DFSNamespaceLink]",
             "IncludeSchema": "true"
           }
         }

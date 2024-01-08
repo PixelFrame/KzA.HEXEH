@@ -105,6 +105,7 @@ namespace KzA.HEXEH.Core.Parser
                             }
                             var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
                             node.Value = parsed.Value;
+                            node.DisplayValue = parsed.DisplayValue;
                             node.Detail = parsed.Detail;
                             node.Children.AddRange(parsed.Children);
                             node.Length = Read;
@@ -122,6 +123,7 @@ namespace KzA.HEXEH.Core.Parser
                             }
                             parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
                             node.Value = parsed.Value;
+                            node.DisplayValue = parsed.DisplayValue;
                             node.Detail = parsed.Detail;
                             node.Children.AddRange(parsed.Children);
                             node.Length = Read;
@@ -264,28 +266,44 @@ namespace KzA.HEXEH.Core.Parser
             }
             var targetType = _dynamicEnums.Where(t => t.Name == Conversion.Target).FirstOrDefault() ??
                 throw new SchemaException($"Target type \"{Conversion.Target}\" not defined", _schema.Name, "");
-            Node.Value = Enum.ToObject(targetType, value).ToString() ??
+            Node.Value = value.ToString();
+            Node.DisplayValue = Enum.ToObject(targetType, value).ToString() ??
                 $"{value} (0x{value:X})";
         }
 
         private string ParserConditionReplacement(Match m, IEnumerable<DataNode> parsed)
         {
             var _key = m.Groups["key"].Value;
+            var _prop = m.Groups["prop"].Value;
             var _cases = m.Groups["case"].Captures;
             var _values = m.Groups["value"].Captures;
+            if (string.IsNullOrEmpty(_prop)) _prop = "Value";
+            else _prop = _prop[1..];
 
-            var parsedValue = parsed.Where(n => n.Label == _key).First().Value;
+            if (typeof(DataNode).GetProperty(_prop)?.GetValue(parsed.Where(n => n.Label == _key).First()) is not string parsedValue)
+                throw new SchemaException($"Property not found", _schema.Name, _currentField);
+
+            Log.Debug("[{_actualTypeName}] Condition {key}.{prop} has value {parsedValue}", _actualTypeName, _key, _prop, parsedValue);
+
             for (int i = 0; i < _cases.Count; ++i)
             {
                 if (_cases[i].Value == parsedValue || _cases[i].Value == string.Empty)
                     return _values[i].Value;
             }
-            throw new SchemaException($"Condition not covered", _schema.Name, "");
+            throw new SchemaException($"Condition not covered", _schema.Name, _currentField);
         }
 
         private string ParserInterpolationReplacement(Match m, IEnumerable<DataNode> parsed)
         {
-            return parsed.Where(n => n.Label == m.Groups[1].Value).First().Value;
+            var _key = m.Groups["key"].Value;
+            var _prop = m.Groups["prop"].Value;
+            if (string.IsNullOrEmpty(_prop)) _prop = "Value";
+            else _prop = _prop[1..];
+
+            if (typeof(DataNode).GetProperty(_prop)?.GetValue(parsed.Where(n => n.Label == _key).First()) is not string parsedValue)
+                throw new SchemaException($"Property not found", _schema.Name, _currentField);
+            Log.Debug("[{_actualTypeName}] Interpolation {key}.{prop} has value {parsedValue}", _actualTypeName, _key, _prop, parsedValue);
+            return parsedValue;
         }
 
         private void ProcessOptionCondition(Dictionary<string, string> original, IEnumerable<DataNode> parsed)
@@ -318,10 +336,10 @@ namespace KzA.HEXEH.Core.Parser
             }
         }
 
-        [GeneratedRegex(@"{(\w+)}")]
+        [GeneratedRegex(@"{(?<key>\w+)(?<prop>\.\w+)?}")]
         private static partial Regex ParserInterpolationRegex();
 
-        [GeneratedRegex(@"\[(?<key>\w+);((?<case>.*?):(?<value>[\w\.]+);?)+\]")]
+        [GeneratedRegex(@"\[(?<key>\w+)(?<prop>\.\w+)?;((?<case>.*?):(?<value>[\w\.]+);?)+\]")]
         private static partial Regex ParserConditionRegex();
 
         public override void SetOptionsFromSchema(Dictionary<string, string> Options)
