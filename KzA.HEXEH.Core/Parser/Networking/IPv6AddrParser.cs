@@ -1,8 +1,8 @@
 ﻿using KzA.HEXEH.Base.Output;
 using KzA.HEXEH.Base.Parser;
-using KzA.HEXEH.Core.DataStructure.Networking;
 using KzA.HEXEH.Core.Utility;
 using Serilog;
+using System.Net;
 using System.Runtime.InteropServices;
 
 namespace KzA.HEXEH.Core.Parser.Networking
@@ -41,10 +41,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
                 if (Length != 16) { throw new ArgumentException("Length of IPv6 Address should be 16."); }
                 if (Input.Length - Offset < Length) { throw new ArgumentException("Data too short."); }
 
-                var byteArr = Input.Slice(Offset, 16).ToArray();
-                var handle = GCHandle.Alloc(byteArr, GCHandleType.Pinned);
-                var addrObj = (IPv6Addr)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(IPv6Addr))!;
-                handle.Free();
+                var addrObj = new IPAddress(Input.Slice(Offset, Length));
 
                 var head = new DataNode()
                 {

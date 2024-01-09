@@ -20,7 +20,7 @@ namespace KzA.HEXEH.Core.Parser
 
         public SchemaParser()
         {
-            _actualTypeName = GetType().FullName!;
+            _actualTypeName = "SchemaParser::" + GetType().Name;
             Log.Debug("[{_actualTypeName}] Creating Schema Parser Instance {_actualTypeName}", _actualTypeName);
             _schema = SchemaProcessor.LoadSchema(GetType());
             _dynamicEnums = SchemaProcessor.CreateEnums(_schema);

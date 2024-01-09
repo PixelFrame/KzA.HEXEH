@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using System.Text.RegularExpressions;
 using Xunit.Abstractions;
 
 namespace KzA.HEXEH.Test
@@ -24,6 +25,12 @@ namespace KzA.HEXEH.Test
                     .CreateLogger();
                 LoggerCreated = true;
             }
+        }
+
+        protected byte[] PrepareData(string HexString)
+        {
+            var escaped = Regex.Replace(HexString, @"[\s-,]|0x", string.Empty);
+            return Convert.FromHexString(escaped);
         }
     }
 }

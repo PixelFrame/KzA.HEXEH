@@ -102,10 +102,16 @@
     <None Update="Schema\Windows\DNS\DnsRecordDsAttribute.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Schema\Windows\DNS\DnsRpcRecordAAAA.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordA.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordCNAME.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Windows\DNS\DnsRpcRecordSRV.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordTXT.json">

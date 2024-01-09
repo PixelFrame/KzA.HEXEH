@@ -1,4 +1,5 @@
-﻿using KzA.HEXEH.Core.Parser;
+﻿using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Parser;
 using Xunit.Abstractions;
 
 namespace KzA.HEXEH.Test
@@ -8,9 +9,17 @@ namespace KzA.HEXEH.Test
         [Fact]
         public void TestEnum()
         {
-            foreach (var parser in ParserManager.AvailableParsers)
+            /*foreach (var parser in ParserManager.AvailableParsers)
             {
                 Output.WriteLine($"{parser.Name} | {parser.FullName}");
+            }*/
+            foreach (var parserGroup in ParserManager.AvailableParsers.GroupBy(t => t.Namespace))
+            {
+                Output.WriteLine(parserGroup.Key);
+                foreach (var parser in parserGroup)
+                {
+                    Output.WriteLine($"    {parser.Name}");
+                }
             }
         }
 
@@ -27,6 +36,24 @@ namespace KzA.HEXEH.Test
         public void TestDnsRecordDsAttribute_A()
         {
             var data = new byte[] { 0x04, 0x00, 0x01, 0x00, 0x05, 0xF0, 0x00, 0x00, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x93, 0x38, 0x00, 0x0A, 0x02, 0x0A, 0x0D };
+            var parser = ParserManager.InstantiateParserByBaseName("DnsRecordDsAttribute");
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
+        [Fact]
+        public void TestDnsRecordDsAttribute_AAAA()
+        {
+            var data = PrepareData(@"10 00 1C 00 05 F0 00 00 80 01 00 00 00 00 04 B0 00 00 00 00 C7 94 38 00 FD 99 E4 18 5F 79 00 02 05 16 7D FF 33 8E 82 DA");
+            var parser = ParserManager.InstantiateParserByBaseName("DnsRecordDsAttribute");
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
+        [Fact]
+        public void TestDnsRecordDsAttribute_SRV()
+        {
+            var data = PrepareData(@"1E 00 21 00 05 F0 00 00 45 00 00 00 00 00 02 58 00 00 00 00 E2 91 38 00 00 00 00 64 01 85 16 04 04 76 70 64 63 04 63 6F 72 70 06 77 79 76 65 72 6E 03 6F 72 67 00");
             var parser = ParserManager.InstantiateParserByBaseName("DnsRecordDsAttribute");
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
