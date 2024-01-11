@@ -111,6 +111,9 @@
     <None Update="Schema\Windows\DNS\DnsRpcRecordCNAME.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Schema\Windows\DNS\DnsRpcRecordMX.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Schema\Windows\DNS\DnsRpcRecordSRV.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

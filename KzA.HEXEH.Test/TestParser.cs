@@ -2,6 +2,7 @@
 using KzA.HEXEH.Core.Parser.Common;
 using KzA.HEXEH.Core.Parser.Common.String;
 using KzA.HEXEH.Core.Parser.Networking;
+using KzA.HEXEH.Core.Parser.Windows;
 using System.Text;
 using Xunit.Abstractions;
 
@@ -14,6 +15,15 @@ namespace KzA.HEXEH.Test
         {
             var data = new byte[] { 0x03, 0x61, 0x62, 0x63, 0x07, 0x63, 0x6F, 0x6E, 0x74, 0x6F, 0x73, 0x6F, 0x03, 0x63, 0x6F, 0x6D, 0x00 };
             var parser = new FqdnParser();
+            var result = parser.Parse(data, null);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
+        [Fact]
+        public void TestFqdnList()
+        {
+            var data = PrepareData("06 67 6F 6F 67 6C 65 03 63 6F 6D 00 04 74 65 73 74 C0 00 09 6D 69 63 72 6F 73 6F 66 74 C0 07 04 69 70 76 36 C0 13");
+            var parser = new FqdnListParser();
             var result = parser.Parse(data, null);
             Output.WriteLine(result.ToStringVerbose());
         }
@@ -111,6 +121,16 @@ namespace KzA.HEXEH.Test
         {
             var data = new byte[] { 0xaa, 0xbb, 0xcc, 0xdd };
             var parser = new UnixTimeParser();
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
+
+        [Fact]
+        public void TestSystemTime()
+        {
+            var data = PrepareData("e7 07 0b 00 03 00 08 00 0b 00 3b 00 08 00 0f 00");
+            var parser = new SYSTEMTIMEParser();
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
         }
