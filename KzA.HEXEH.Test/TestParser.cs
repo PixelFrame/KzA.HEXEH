@@ -125,6 +125,15 @@ namespace KzA.HEXEH.Test
             Output.WriteLine(result.ToStringVerbose());
         }
 
+        [Fact]
+        public void TestFileTime()
+        {
+            var data = PrepareData("01da4888b9e5acc0");
+            var parser = new FILETIMEParser();
+            parser.SetOptions(new() { { "BigEndian", true } });
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
 
         [Fact]
         public void TestSystemTime()

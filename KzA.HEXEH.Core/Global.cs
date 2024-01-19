@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 namespace KzA.HEXEH.Core
 {
-    internal static class Global
+    public static class Global
     {
         internal static readonly int[] ValidLengthNumberLen = [1, 2, 4, /*8*/]; // ulong needs many conversion and is rarely used as a size
         internal static readonly int[] ValidNumberLen = [1, 2, 4, 8];
