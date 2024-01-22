@@ -336,10 +336,5 @@ namespace KzA.HEXEH.Core.Parser
 
         [GeneratedRegex(@"\[(?<key>\w+)(?<prop>\.\w+)?;((?<case>.*?):(?<value>[\w\.]+);?)+\]")]
         private static partial Regex ParserConditionRegex();
-
-        public override void SetOptionsFromSchema(Dictionary<string, string> Options)
-        {
-            throw new NotSupportedException();
-        }
     }
 }

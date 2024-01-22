@@ -1,4 +1,5 @@
-﻿using KzA.HEXEH.Core.Parser;
+﻿using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Parser;
 using KzA.HEXEH.Core.Parser.Common;
 using KzA.HEXEH.Core.Parser.Common.String;
 using KzA.HEXEH.Core.Parser.Networking;

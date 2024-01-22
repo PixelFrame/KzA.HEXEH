@@ -8,6 +8,7 @@ namespace KzA.HEXEH.Core.Extension
 {
     public static class ExtensionManager
     {
+        internal static List<Type> ExtensionParsers = [];
         internal static void LoadExtensions()
         {
             try
@@ -34,7 +35,7 @@ namespace KzA.HEXEH.Core.Extension
             }
         }
 
-        internal static void LoadExtensionsActual(IEnumerable<DirectoryInfo> extdirs)
+        private static void LoadExtensionsActual(IEnumerable<DirectoryInfo> extdirs)
         {
             Log.Debug("[ExtensionManager] Found {count} extension dir(s)", extdirs.Count());
             foreach (var extdir in extdirs)
@@ -55,7 +56,7 @@ namespace KzA.HEXEH.Core.Extension
                 {
                     if (type.IsAssignableTo(typeof(IParser)) && !type.IsInterface && !type.IsAbstract)
                     {
-                        ParserManager.AvailableParsers.Add(type);
+                        ExtensionParsers.Add(type);
                         Log.Debug("[ExtensionManager] Extension parser added {parser}", type.FullName ?? type.Name);
                     }
                     else

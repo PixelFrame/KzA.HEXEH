@@ -1,4 +1,5 @@
 ﻿using KzA.HEXEH.Base.Parser;
+using KzA.HEXEH.Core.Extension;
 using Serilog;
 
 namespace KzA.HEXEH.Core.Parser
@@ -11,8 +12,8 @@ namespace KzA.HEXEH.Core.Parser
             Log.Information("[ParserManager] Initialized");
         }
 
-        private static IList<Type> availableParsers = [];
-        public static IList<Type> AvailableParsers
+        private static List<Type> availableParsers = [];
+        public static List<Type> AvailableParsers
         {
             get => availableParsers;
         }
@@ -34,6 +35,7 @@ namespace KzA.HEXEH.Core.Parser
                    .SelectMany(assembly => assembly.GetTypes())
                    .Where(t => desiredType.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                    .ToList();
+            availableParsers.AddRange(ExtensionManager.ExtensionParsers);
             Log.Information("[ParserManager] Parsers refresh completed");
         }
 
