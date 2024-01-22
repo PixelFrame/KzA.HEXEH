@@ -10,7 +10,32 @@ namespace KzA.HEXEH.Core.Extension
     {
         internal static void LoadExtensions()
         {
-            var extdirs = Global.FileAccessor.EnumExtensionDirs();
+            try
+            {
+                var extdirs = Global.FileAccessor.EnumExtensionDirs();
+                LoadExtensionsActual(extdirs);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("Exception occured during extension loading. Extensions may not be available.", ex);
+            }
+        }
+
+        internal static async Task LoadExtensionsAsync()
+        {
+            try
+            {
+                var extdirs = await Global.FileAccessor.EnumExtensionDirsAsync();
+                LoadExtensionsActual(extdirs);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("Exception occured during extension loading. Extensions may not be available.", ex);
+            }
+        }
+
+        internal static void LoadExtensionsActual(IEnumerable<DirectoryInfo> extdirs)
+        {
             Log.Debug("[ExtensionManager] Found {count} extension dir(s)", extdirs.Count());
             foreach (var extdir in extdirs)
             {

@@ -23,6 +23,7 @@ namespace KzA.HEXEH.Core.Parser
             _actualTypeName = "SchemaParser::" + GetType().Name;
             Log.Debug("[{_actualTypeName}] Creating Schema Parser Instance {_actualTypeName}", _actualTypeName);
             _schema = SchemaProcessor.LoadSchema(GetType());
+            if (_schema == null) throw new SchemaException("Fail to load schema!", "", "");
             _dynamicEnums = SchemaProcessor.CreateEnums(_schema);
         }
 
@@ -175,12 +176,6 @@ namespace KzA.HEXEH.Core.Parser
         public override void SetOptions(Dictionary<string, object> Options)
         {
             throw new NotSupportedException();
-        }
-
-        private void SetSchema(SchemaJsonObject SchemaObj, IEnumerable<Type> DynamicEnums)
-        {
-            _schema = SchemaObj;
-            _dynamicEnums = DynamicEnums;
         }
 
         private void ParseBasic(DataNode Node, string TypeName, in ReadOnlySpan<byte> Input, ref int Index, bool BigEndian, int Length, ulong? Expected)

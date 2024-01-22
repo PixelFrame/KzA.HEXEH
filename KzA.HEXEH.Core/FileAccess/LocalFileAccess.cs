@@ -5,6 +5,7 @@ namespace KzA.HEXEH.Core.FileAccess
 {
     internal class LocalFileAccess : IFileAccess
     {
+        public bool UseAsync { get; set; } = false;
 
         internal static readonly List<string> SchemaLocation = [
             "./Schema",
@@ -41,6 +42,11 @@ namespace KzA.HEXEH.Core.FileAccess
             }
         }
 
+        public async Task<IEnumerable<DirectoryInfo>> EnumExtensionDirsAsync()
+        {
+            return await Task.FromResult(EnumExtensionDirs());
+        }
+
         public IEnumerable<SchemaFile> EnumSchemas()
         {
             try
@@ -72,10 +78,21 @@ namespace KzA.HEXEH.Core.FileAccess
             }
         }
 
+        public async Task<IEnumerable<SchemaFile>> EnumSchemasAsync()
+        {
+            return await Task.FromResult(EnumSchemas());
+        }
+
         public string ReadSchemaContent(SchemaFile schema)
         {
             Log.Debug("[LocalFileAccess] Reading file {schema}", schema.FullPath);
             return File.ReadAllText(schema.FullPath);
+        }
+
+        public async Task<Stream> GetSchemaReadStreamAsync(SchemaFile schema)
+        {
+            Log.Debug("[LocalFileAccess] Reading file {schema} async", schema.FullPath);
+            return await Task.FromResult(new FileStream(schema.FullPath, FileMode.Open, System.IO.FileAccess.Read));
         }
     }
 }

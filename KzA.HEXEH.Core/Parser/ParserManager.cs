@@ -1,5 +1,4 @@
 ﻿using KzA.HEXEH.Base.Parser;
-using KzA.HEXEH.Core.Schema;
 using Serilog;
 
 namespace KzA.HEXEH.Core.Parser
@@ -16,12 +15,6 @@ namespace KzA.HEXEH.Core.Parser
         public static IList<Type> AvailableParsers
         {
             get => availableParsers;
-        }
-
-        private static Dictionary<string, SchemaJsonObject> createdSchema = [];
-        internal static Dictionary<string, SchemaJsonObject> CreatedSchema
-        {
-            get => createdSchema;
         }
 
         private static Dictionary<string, Type> createdEnums = [];
@@ -72,8 +65,8 @@ namespace KzA.HEXEH.Core.Parser
 
         public static Type FindParserByFullName(string Name)
         {
-            Log.Information($"[ParserManager] Finding parser with full name {Name}Parser");
-            var found = AvailableParsers.Where(p => p.FullName == ($"{Name}Parser")).FirstOrDefault();
+            Log.Information($"[ParserManager] Finding parser with full name {Name}");
+            var found = AvailableParsers.Where(p => p.FullName == Name).FirstOrDefault();
             return found ??
                 throw new ParserFindException($"Parser with full name {Name} is not found");
         }

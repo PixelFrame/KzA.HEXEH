@@ -11,22 +11,55 @@ namespace KzA.HEXEH.Core.Schema
 {
     internal static partial class SchemaProcessor
     {
-        internal static SchemaJsonObject LoadSchema(Type ParserType)
+        private static Dictionary<string, SchemaJsonObject> createdSchema = [];
+        internal static Dictionary<string, SchemaJsonObject> CreatedSchema
+        {
+            get => createdSchema;
+        }
+
+        private static SchemaJsonObject? LoadSchemaPreCheck(Type ParserType, SchemaFile schemaFile)
         {
             if (!ParserType.IsAssignableTo(typeof(IParser)))
                 throw new ArgumentException($"{ParserType.FullName} is not a schema parser");
-            var schemaFile = GetSchemaFromAttribute(ParserType);
-            if (ParserManager.CreatedSchema.TryGetValue(schemaFile.FullPath, out SchemaJsonObject? value))
+            if (CreatedSchema.TryGetValue(schemaFile.FullPath, out SchemaJsonObject? value))
             {
                 Log.Debug("[SchemaProcessor] SchemaJsonObject {schema} existing", schemaFile.FullPath);
                 return value;
             }
+            return null;
+        }
+
+        internal static SchemaJsonObject LoadSchema(Type ParserType)
+        {
+            var schemaFile = GetSchemaFromAttribute(ParserType);
+            var precheck = LoadSchemaPreCheck(ParserType, schemaFile);
+            if (null != precheck)
+                return precheck;
+
             Log.Debug("[SchemaProcessor] Loading schema {schema}", schemaFile.FullPath);
             var schemaJsonContent = Global.FileAccessor.ReadSchemaContent(schemaFile);
             Log.Verbose($"[SchemaProcessor] Schema content:{Environment.NewLine}{{schemaJsonContent}}", schemaJsonContent);
             var schemaObj = JsonSerializer.Deserialize<SchemaJsonObject>(schemaJsonContent)!;
-            ParserManager.CreatedSchema.Add(schemaFile.FullPath, schemaObj);
+            CreatedSchema.Add(schemaFile.FullPath, schemaObj);
             Log.Debug("[SchemaProcessor] Loaded schema {schema}", schemaFile.FullPath);
+            return schemaObj;
+        }
+
+        /// This method is not in use as we have pre-created all schema objects for async mode
+        internal static async Task<SchemaJsonObject> LoadSchemaAsync(Type ParserType)
+        {
+            var schemaFile = GetSchemaFromAttribute(ParserType);
+            var precheck = LoadSchemaPreCheck(ParserType, schemaFile);
+            if (null != precheck)
+                return precheck;
+
+            Log.Debug("[SchemaProcessor] Loading schema {schema} async", schemaFile.FullPath);
+            var schemaJsonStream = await Global.FileAccessor.GetSchemaReadStreamAsync(schemaFile);
+            var schemaObj = (await JsonSerializer.DeserializeAsync<SchemaJsonObject>(schemaJsonStream))!;
+            CreatedSchema.Add(schemaFile.FullPath, schemaObj);
+            Log.Debug("[SchemaProcessor] Loaded schema {schema}", schemaFile.FullPath);
+            await schemaJsonStream.DisposeAsync();
+
             return schemaObj;
         }
 
@@ -69,7 +102,7 @@ namespace KzA.HEXEH.Core.Schema
                     }
                     Log.Debug("[SchemaProcessor] Creating Flag type {enumName}", flagObj.Name);
                     var eb = Global.DynamicModule.DefineEnum($"KzA.HEXEH.Core.Dynamic.Enums.{flagObj.Name}", TypeAttributes.Public, typeof(int));
-                    var flagsAttrib = new CustomAttributeBuilder(typeof(FlagsAttribute).GetConstructor(Type.EmptyTypes)!, Array.Empty<object>());
+                    var flagsAttrib = new CustomAttributeBuilder(typeof(FlagsAttribute).GetConstructor(Type.EmptyTypes)!, []);
                     eb.SetCustomAttribute(flagsAttrib);
                     foreach (var item in flagObj.Definition)
                     {
@@ -87,6 +120,28 @@ namespace KzA.HEXEH.Core.Schema
         internal static void InitializeSchemaParsers()
         {
             var schemaFiles = Global.FileAccessor.EnumSchemas();
+            InitializeSchemaParsersActual(schemaFiles);
+        }
+
+        internal static async Task InitializeSchemaParsersAsync()
+        {
+            var schemaFiles = await Global.FileAccessor.EnumSchemasAsync();
+            InitializeSchemaParsersActual(schemaFiles);
+
+            // Create all schema objects in advance as we do not have plan to support async parse yet.
+            foreach(var schemaFile in schemaFiles)
+            {
+                Log.Debug("[SchemaProcessor] Loading schema {schema} async", schemaFile.FullPath);
+                var schemaJsonStream = await Global.FileAccessor.GetSchemaReadStreamAsync(schemaFile);
+                var schemaObj = (await JsonSerializer.DeserializeAsync<SchemaJsonObject>(schemaJsonStream))!;
+                CreatedSchema.Add(schemaFile.FullPath, schemaObj);
+                Log.Debug("[SchemaProcessor] Loaded schema {schema}", schemaFile.FullPath);
+                await schemaJsonStream.DisposeAsync();
+            }
+        }
+
+        private static void InitializeSchemaParsersActual(IEnumerable<SchemaFile> schemaFiles)
+        {
             foreach (var schemaFile in schemaFiles)
             {
                 var typeName = ProcessSchemaFileName(schemaFile);
@@ -108,7 +163,6 @@ namespace KzA.HEXEH.Core.Schema
                 _ = tb.CreateType();
                 Log.Debug("[SchemaProcessor] Created Parser for schema {schemaFile}", schemaFile.FullPath);
             }
-            ParserManager.RefreshParsers();
         }
 
         private static SchemaFile GetSchemaFromAttribute(Type ParserType)

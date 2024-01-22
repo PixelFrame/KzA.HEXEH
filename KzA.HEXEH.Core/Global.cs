@@ -1,6 +1,7 @@
 ﻿using KzA.HEXEH.Base.FileAccess;
 using KzA.HEXEH.Core.Extension;
 using KzA.HEXEH.Core.FileAccess;
+using KzA.HEXEH.Core.Parser;
 using KzA.HEXEH.Core.Schema;
 using Serilog;
 using System.Reflection;
@@ -42,10 +43,14 @@ namespace KzA.HEXEH.Core
             FileAccessor = fileAccess;
         }
 
-        internal static void Initialize()
+        public static void Initialize()
         {
+            if (IsInitialized) return;
+            if (FileAccessor.UseAsync) throw new Exception("File Accessor is set to async, call InitializeAsync instead");
             Log.Information("[Global] HEXEH Initializing parsers and extensions");
 
+            Log.Debug("[Global] File Accessor is {accessorType}", FileAccessor.GetType().FullName);
+            Log.Debug($"[Global] File accessing mode is sync");
             Log.Debug("[Global] Creating dynamic parsers");
             SchemaProcessor.InitializeSchemaParsers();
             Log.Debug("[Global] Created dynamic parsers");
@@ -56,6 +61,28 @@ namespace KzA.HEXEH.Core
 
             Log.Information("[Global] HEXEH Initialized");
             IsInitialized = true;
+            ParserManager.RefreshParsers();
+        }
+
+        public static async Task InitializeAsync()
+        {
+            if (IsInitialized) return;
+            if (!FileAccessor.UseAsync) throw new Exception("File Accessor is set to sync, call Initialize instead");
+            Log.Information("[Global] HEXEH Initializing parsers and extensions");
+
+            Log.Debug("[Global] File Accessor is {accessorType}", FileAccessor.GetType().FullName);
+            Log.Debug($"[Global] File accessing mode is async");
+            Log.Debug("[Global] Creating dynamic parsers");
+            await SchemaProcessor.InitializeSchemaParsersAsync();
+            Log.Debug("[Global] Created dynamic parsers");
+
+            Log.Debug("[Global] Loading extensions");
+            await ExtensionManager.LoadExtensionsAsync();
+            Log.Debug("[Global] Loaded extensions");
+
+            Log.Information("[Global] HEXEH Initialized");
+            IsInitialized = true;
+            ParserManager.RefreshParsers();
         }
     }
 }
