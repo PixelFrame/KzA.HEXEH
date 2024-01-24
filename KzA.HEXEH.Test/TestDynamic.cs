@@ -112,5 +112,14 @@ namespace KzA.HEXEH.Test
             var result = parser.Parse(data);
             Output.WriteLine(result.ToStringVerbose());
         }
+
+        [Fact]
+        public void TestServiceFailureActions()
+        {
+            var data = PrepareData("08-07-00-00-01-00-00-00-01-00-00-00-0B-00-00-00-14-00-00-00-01-00-00-00-00-00-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-01-00-00-00-98-3A-00-00-00-00-00-00-00-00-00-00");
+            var parser = ParserManager.InstantiateParserByRelativeName("Windows.Service.FailureActions", true);
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
     }
 }
