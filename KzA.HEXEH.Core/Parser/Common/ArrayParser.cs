@@ -2,6 +2,7 @@
 using KzA.HEXEH.Base.Parser;
 using KzA.HEXEH.Core.Utility;
 using Serilog;
+using System.Buffers.Binary;
 using System.Text.Json;
 
 namespace KzA.HEXEH.Core.Parser.Common
@@ -12,12 +13,16 @@ namespace KzA.HEXEH.Core.Parser.Common
         private int objectCount;
         private bool includeSchema = false;
         private IParser? nextParser;
+        private ulong terminator = 0;
+        private int terminatorLength = 1;
 
         public override Dictionary<string, Type> GetOptions()
         {
             return new Dictionary<string, Type>()
             {
                 { "ObjectCount?", typeof(int) },
+                { "Terminator?", typeof(ulong) },
+                { "TerminatorLength?", typeof(int) },
                 { "ObjectParser", typeof(string) },
                 { "IncludeSchema?", typeof(bool) },
                 { "ParserOptions?", typeof(Dictionary<string, object>) }
@@ -66,6 +71,7 @@ namespace KzA.HEXEH.Core.Parser.Common
                     {
                         head.Children.Add(nextParser.Parse(Input, Offset, out int currentObjLen, ParseStack));
                         Offset += currentObjLen;
+                        if (ValidateTerminator(Input, Offset)) break;
                         if (Offset == Input.Length) break;
                         if (Offset > Input.Length) throw new ParseFailureException("Array exceeds data boundry", ParseStack.Dump(), Offset - currentObjLen, null);
                     }
@@ -86,6 +92,19 @@ namespace KzA.HEXEH.Core.Parser.Common
             }
         }
 
+        private bool ValidateTerminator(in ReadOnlySpan<byte> Input, int Offset)
+        {
+            ulong nextToken = 0;
+            switch (terminatorLength)
+            {
+                case 1: nextToken = Input[Offset]; break;
+                case 2: nextToken = BigEndian ? BinaryPrimitives.ReadUInt16BigEndian(Input.Slice(Offset, 2)) : BinaryPrimitives.ReadUInt16LittleEndian(Input.Slice(Offset, 2)); break;
+                case 4: nextToken = BigEndian ? BinaryPrimitives.ReadUInt32BigEndian(Input.Slice(Offset, 4)) : BinaryPrimitives.ReadUInt32LittleEndian(Input.Slice(Offset, 4)); break;
+                case 8: nextToken = BigEndian ? BinaryPrimitives.ReadUInt64BigEndian(Input.Slice(Offset, 8)) : BinaryPrimitives.ReadUInt32LittleEndian(Input.Slice(Offset, 8)); break;
+            }
+            return nextToken == terminator;
+        }
+
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
             if (objectCount < 0)
@@ -101,13 +120,13 @@ namespace KzA.HEXEH.Core.Parser.Common
                         Label = "Array of objects with length inherited",
                         Index = Offset,
                     };
-                    var start = Offset;
+                    var end = Offset + Length;
                     while (true)
                     {
                         head.Children.Add(nextParser.Parse(Input, Offset, out int currentObjLen, ParseStack));
                         Offset += currentObjLen;
-                        if (Offset == Length) break;
-                        if (Offset > Length) throw new ParseFailureException("Array exceeds data boundry", ParseStack.Dump(), Offset - currentObjLen, null);
+                        if (Offset == end) break;
+                        if (Offset > end) throw new ParseFailureException("Array exceeds data boundry", ParseStack.Dump(), Offset - currentObjLen, null);
                     }
                     head.Length = Length;
                     Log.Debug("[ArrayParser] Parsed {Read} bytes", Length);
@@ -195,6 +214,40 @@ namespace KzA.HEXEH.Core.Parser.Common
                 objectCount = -1;
             }
 
+            if (Options.TryGetValue("Terminator", out var terminatorObj))
+            {
+                if (terminatorObj is ulong _terminatorObj)
+                {
+                    terminator = _terminatorObj;
+                    Log.Debug("[ArrayParser] Set option Terminator to {terminator}", terminator);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: Terminator");
+                }
+            }
+            else
+            {
+                terminator = 0;
+            }
+
+            if (Options.TryGetValue("TerminatorLength", out var terminatorLenObj))
+            {
+                if (terminatorLenObj is int _terminatorLenObj)
+                {
+                    terminatorLength = _terminatorLenObj;
+                    Log.Debug("[ArrayParser] Set option TerminatorLength to {terminatorLength}", terminatorLength);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: TerminatorLength");
+                }
+            }
+            else
+            {
+                terminatorLength = 1;
+            }
+
             if (Options.TryGetValue("ParserOptions", out var nextParserOptionsObj))
             {
                 if (nextParserOptionsObj is Dictionary<string, object> nextParserOptions)
@@ -245,6 +298,40 @@ namespace KzA.HEXEH.Core.Parser.Common
             else
             {
                 objectCount = -1;
+            }
+
+            if (Options.TryGetValue("Terminator", out var terminatorObj))
+            {
+                if (ulong.TryParse(terminatorObj, out var _terminatorObj))
+                {
+                    terminator = _terminatorObj;
+                    Log.Debug("[ArrayParser] Set option Terminator to {terminator}", terminator);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: Terminator");
+                }
+            }
+            else
+            {
+                terminator = 0;
+            }
+
+            if (Options.TryGetValue("TerminatorLength", out var terminatorLenObj))
+            {
+                if (int.TryParse(terminatorLenObj, out var _terminatorLenObj))
+                {
+                    terminatorLength = _terminatorLenObj;
+                    Log.Debug("[ArrayParser] Set option TerminatorLength to {terminatorLength}", terminatorLength);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid Option: TerminatorLength");
+                }
+            }
+            else
+            {
+                terminatorLength = 1;
             }
 
             if (Options.TryGetValue("ParserOptions", out var nextParserOptionsStr))

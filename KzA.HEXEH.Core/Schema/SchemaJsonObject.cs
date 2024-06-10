@@ -35,16 +35,18 @@
         public JsonParserType Type { get; set; }
         public string Target { get; set; } = string.Empty;
         public Dictionary<string, string>? Options { get; set; }
+        public int Length { get; set; } = -1;
+        public string LengthFromProp { get; set; } = string.Empty;
+        public bool LengthFromParent { get; set; } = false;
+        public int LengthModifier { get; set; } = 0;
 
         // BasicConvert
         public ValueConversion? Conversion { get; set; } = new();
         public bool BigEndian { get; set; } = false;
-        public int Length { get; set; } = -1;
 
         // Schema
-        public bool AllowFallback { get; set; } = true;
+        public bool AllowFallback { get; set; } = false;
         public string FallbackTarget { get; set; } = "RAW";
-        public int FallbackLength { get; set; } = -1;
 
         // Extension
         public string ExtensionNamespace { get; set; } = string.Empty;

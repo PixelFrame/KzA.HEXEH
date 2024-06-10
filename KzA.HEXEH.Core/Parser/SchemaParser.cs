@@ -17,6 +17,7 @@ namespace KzA.HEXEH.Core.Parser
         private string _actualTypeName;
         private string _currentField = string.Empty;
         private Stack<string>? _currentStack = null;
+        private int _parentLength = -1;
 
         public SchemaParser()
         {
@@ -70,6 +71,23 @@ namespace KzA.HEXEH.Core.Parser
                         Label = field,
                         Index = index,
                     };
+                    if (def.Parser.LengthFromParent)
+                    {
+                        def.Parser.Length = _parentLength;
+                    }
+                    if (def.Parser.LengthFromProp != string.Empty)
+                    {
+                        try
+                        {
+                            Log.Debug("[{_actualTypeName}] Set parser length to value from {LengthFromProp}", def.Parser.LengthFromProp);
+                            def.Parser.Length = int.Parse(head.Children.Where(n => n.Label == def.Parser.LengthFromProp).First().Value);
+                        }
+                        catch
+                        {
+                            def.Parser.Length = -1;
+                        }
+                    }
+                    def.Parser.Length += def.Parser.LengthModifier;
                     switch (def.Parser.Type)
                     {
                         case JsonParser.JsonParserType.Basic:
@@ -106,19 +124,29 @@ namespace KzA.HEXEH.Core.Parser
                                     ProcessOptionInterpolation(options, head.Children);
                                     nextParser.SetOptionsFromSchema(options);
                                 }
-                                var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
+                                DataNode parsed;
+                                if (def.Parser.Length == -1)
+                                {
+                                    parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
+                                    node.Length = Read;
+                                    index += Read;
+                                }
+                                else
+                                {
+                                    parsed = nextParser.Parse(in Input, index, def.Parser.Length, ParseStack);
+                                    node.Length = def.Parser.Length;
+                                    index += def.Parser.Length;
+                                }
                                 node.Value = parsed.Value;
                                 node.DisplayValue = parsed.DisplayValue;
                                 node.Detail = parsed.Detail;
                                 node.Children.AddRange(parsed.Children);
-                                node.Length = Read;
-                                index += Read;
                             }
                             catch (ParserFindException)
                             {
                                 if (def.Parser.AllowFallback)
                                     // Fallback to basic parsing if next parser not found
-                                    ParseBasic(node, def.Parser.FallbackTarget, Input, ref index, def.Parser.BigEndian, def.Parser.FallbackLength, def.Expected);
+                                    ParseBasic(node, def.Parser.FallbackTarget, Input, ref index, def.Parser.BigEndian, def.Parser.Length, def.Expected);
                                 else throw;
                             }
                             break;
@@ -162,6 +190,7 @@ namespace KzA.HEXEH.Core.Parser
 
         public override DataNode Parse(in ReadOnlySpan<byte> Input, int Offset, int Length, Stack<string>? ParseStack = null)
         {
+            _parentLength = Length;
             var res = Parse(Input, Offset, out var read, ParseStack);
             if (read < Length)
             {
