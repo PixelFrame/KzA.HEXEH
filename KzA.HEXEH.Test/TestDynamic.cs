@@ -104,6 +104,25 @@ namespace KzA.HEXEH.Test
             Output.WriteLine(result.ToStringVerbose());
         }
 
+
+        [Fact]
+        public void TestDhcpOption6()
+        {
+            var data = new byte[] { 0x06, 0x04, 0x0a, 0x01, 0x01, 0x01 };
+            var parser = ParserManager.InstantiateParserByRelativeName("Networking.DHCP.DhcpOption", true);
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
+        [Fact]
+        public void TestDhcpList()
+        {
+            var data = PrepareData("3501053a0400000e103b040000189c330400001c2036040a0102010104ffff0000510303ff0003040a0100fe06080a0101010a0201010f12636f72702e73796d70686f6e792e6f726700771504636f72700873796d70686f6e79036f726700c005fc28687474703a2f2f777061642e636f72702e73796d70686f6e792e6f72672f70726f78792e70616300ff");
+            var parser = ParserManager.InstantiateParserByRelativeName("Networking.DHCP.DhcpOptionList", true);
+            var result = parser.Parse(data);
+            Output.WriteLine(result.ToStringVerbose());
+        }
+
         [Fact]
         public void TestDfsnPkt()
         {

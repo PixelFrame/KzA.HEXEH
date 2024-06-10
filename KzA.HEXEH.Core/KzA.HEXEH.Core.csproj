@@ -66,6 +66,30 @@
     <None Update="Schema\DNS\DnsRpcRecordSOA.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Schema\Networking\DHCP\DhcpOption.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData119.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData252.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData3.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData15.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionData6.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Networking\DHCP\DhcpOptionList.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Schema\Windows\DFSN\DFSNamespaceLink.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -50,12 +50,12 @@ namespace KzA.HEXEH.Core.Parser.Networking
             try
             {
                 List<DataNode> fqdnNodes = [];
-                var start = 0;
+                var start = Offset;
                 while (Offset < start + Length)
                 {
                     int elapsed = 0;
-                    var passedPtr = new List<ushort>();
-                    var name = ReadName(Input, Offset, ref elapsed, ref passedPtr);
+                    var passedPtr = new List<int>();
+                    var name = ReadName(Input, Offset, start, ref elapsed, ref passedPtr);
                     var fqdnNode = new DataNode()
                     {
                         Label = "FQDN",
@@ -84,7 +84,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
             }
         }
 
-        private static string ReadName(ReadOnlySpan<byte> SearchList, int index, ref int elapsed, ref List<ushort> passedPtr)
+        private static string ReadName(ReadOnlySpan<byte> SearchList, int index, int start, ref int elapsed, ref List<int> passedPtr)
         {
             /* 
              * We will record all the pointers passed, if we encounter a pointer that we have passed before, it means we have a loop in the option value.
@@ -94,7 +94,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
             byte len = SearchList[index];
             if (len > LABEL_LEN_MAX)
             {
-                var ptr = (ushort)(BinaryPrimitives.ReadUInt16BigEndian(SearchList.Slice(index, 2)) & ~POINTER_MASK);
+                var ptr = start + (ushort)(BinaryPrimitives.ReadUInt16BigEndian(SearchList.Slice(index, 2)) & ~POINTER_MASK);
                 if (passedPtr.Contains(ptr))
                 {
                     throw new Exception("Loop detected in the option value.");
@@ -102,7 +102,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
                 passedPtr.Add(ptr);
                 elapsed += 2;
                 int _ = 0;
-                return ReadName(SearchList, ptr, ref _, ref passedPtr);
+                return ReadName(SearchList, ptr, start, ref _, ref passedPtr);
             }
             else if (len == 0)
             {
@@ -114,7 +114,7 @@ namespace KzA.HEXEH.Core.Parser.Networking
             {
                 elapsed += len + 1;
                 str += System.Text.Encoding.ASCII.GetString(SearchList.Slice(index + 1, len).ToArray());
-                return str + '.' + ReadName(SearchList, index + len + 1, ref elapsed, ref passedPtr);
+                return str + '.' + ReadName(SearchList, index + len + 1, start, ref elapsed, ref passedPtr);
             }
         }
     }

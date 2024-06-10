@@ -36,8 +36,11 @@ namespace KzA.HEXEH.Core.Parser.Common.String
             ParseStack = PrepareParseStack(ParseStack);
             try
             {
-                byte[] terminator = [0x00];
-                var len = Input.IndexOf(terminator);
+                var len = 0;
+                while (Input[Offset + len] != 0)
+                {
+                    len++;
+                }
                 Read = len + 1;
                 var res = new DataNode()
                 {
