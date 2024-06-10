@@ -41,6 +41,11 @@
         public bool BigEndian { get; set; } = false;
         public int Length { get; set; } = -1;
 
+        // Schema
+        public bool AllowFallback { get; set; } = true;
+        public string FallbackTarget { get; set; } = "RAW";
+        public int FallbackLength { get; set; } = -1;
+
         // Extension
         public string ExtensionNamespace { get; set; } = string.Empty;
     }

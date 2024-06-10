@@ -95,38 +95,48 @@ namespace KzA.HEXEH.Core.Parser
                             {
                                 throw new SchemaException($"Unable to create interpolation parser {nextParserName}", _schema.Name, field, e);
                             }
-                            var nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, true);
-                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
-                            if (def.Parser.Options != null)
+                            try
                             {
-                                var options = new Dictionary<string, string>(def.Parser.Options);
-                                ProcessOptionCondition(options, head.Children);
-                                ProcessOptionInterpolation(options, head.Children);
-                                nextParser.SetOptionsFromSchema(options);
+                                var nextParser = ParserManager.InstantiateParserByRelativeName(nextParserName, true);
+                                Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                                if (def.Parser.Options != null)
+                                {
+                                    var options = new Dictionary<string, string>(def.Parser.Options);
+                                    ProcessOptionCondition(options, head.Children);
+                                    ProcessOptionInterpolation(options, head.Children);
+                                    nextParser.SetOptionsFromSchema(options);
+                                }
+                                var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
+                                node.Value = parsed.Value;
+                                node.DisplayValue = parsed.DisplayValue;
+                                node.Detail = parsed.Detail;
+                                node.Children.AddRange(parsed.Children);
+                                node.Length = Read;
+                                index += Read;
                             }
-                            var parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
-                            node.Value = parsed.Value;
-                            node.DisplayValue = parsed.DisplayValue;
-                            node.Detail = parsed.Detail;
-                            node.Children.AddRange(parsed.Children);
-                            node.Length = Read;
-                            index += Read;
+                            catch (ParserFindException)
+                            {
+                                if (def.Parser.AllowFallback)
+                                    // Fallback to basic parsing if next parser not found
+                                    ParseBasic(node, def.Parser.FallbackTarget, Input, ref index, def.Parser.BigEndian, def.Parser.FallbackLength, def.Expected);
+                                else throw;
+                            }
                             break;
                         case JsonParser.JsonParserType.NextParserExtension:
-                            nextParser = ParserManager.InstantiateParserByFullName($"{def.Parser.ExtensionNamespace}.{def.Parser.Target}");
-                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParser.GetType().FullName);
+                            var nextParserExt = ParserManager.InstantiateParserByFullName($"{def.Parser.ExtensionNamespace}.{def.Parser.Target}");
+                            Log.Debug("[{_actualTypeName}] Calling parser {nextParser}", _actualTypeName, nextParserExt.GetType().FullName);
                             if (def.Parser.Options != null)
                             {
                                 var options = new Dictionary<string, string>(def.Parser.Options);
                                 ProcessOptionCondition(options, head.Children);
                                 ProcessOptionInterpolation(options, head.Children);
-                                nextParser.SetOptionsFromSchema(options);
+                                nextParserExt.SetOptionsFromSchema(options);
                             }
-                            parsed = nextParser.Parse(in Input, index, out Read, ParseStack);
-                            node.Value = parsed.Value;
-                            node.DisplayValue = parsed.DisplayValue;
-                            node.Detail = parsed.Detail;
-                            node.Children.AddRange(parsed.Children);
+                            var parsedExt = nextParserExt.Parse(in Input, index, out Read, ParseStack);
+                            node.Value = parsedExt.Value;
+                            node.DisplayValue = parsedExt.DisplayValue;
+                            node.Detail = parsedExt.Detail;
+                            node.Children.AddRange(parsedExt.Children);
                             node.Length = Read;
                             index += Read;
                             break;
@@ -183,6 +193,7 @@ namespace KzA.HEXEH.Core.Parser
             switch (TypeName)
             {
                 case "RAW":
+                    if (Length == -1) Length = Input.Length - Index;
                     Node.Value = BitConverter.ToString(Input.Slice(Index, Length).ToArray());
                     Node.Length = Length;
                     Index += Length;
