@@ -120,6 +120,12 @@
     <None Update="Schema\Windows\DFSN_PKT.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Schema\Windows\DHCP\DhcpInterfaceOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Windows\DHCP\DhcpInterfaceOption.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Schema\Windows\DNS\DnsCountName.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
