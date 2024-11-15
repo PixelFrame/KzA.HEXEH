@@ -71,8 +71,8 @@ namespace KzA.HEXEH.Core.Parser.Common
                     {
                         head.Children.Add(nextParser.Parse(Input, Offset, out int currentObjLen, ParseStack));
                         Offset += currentObjLen;
-                        if (ValidateTerminator(Input, Offset)) break;
                         if (Offset == Input.Length) break;
+                        if (ValidateTerminator(Input, Offset)) break;
                         if (Offset > Input.Length) throw new ParseFailureException("Array exceeds data boundry", ParseStack.Dump(), Offset - currentObjLen, null);
                     }
                 }
