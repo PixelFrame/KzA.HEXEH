@@ -1,0 +1,40 @@
+{
+  "Name": "Ethernet (IEEE 802.3)",
+  "Structure": {
+    "Fields": "DA:SA:Type:Data",
+    "Definition": [
+      {
+        "Name": "DA",
+        "Parser": {
+          "Type": 10,
+          "Target": "Networking.MacAddr"
+        }
+      },
+      {
+        "Name": "SA",
+        "Parser": {
+          "Type": 10,
+          "Target": "Networking.MacAddr"
+        }
+      },
+      {
+        "Name": "Type",
+        "Parser":{
+          "Type": 1,
+          "Target": "WORD",
+          "Conversion":{
+            "Type": 1,
+            "Target": "EtherType"
+          }
+        }
+      },
+      {
+        "Name": "Data",
+        "Parser": {
+          "Type": 0,
+          "Target": "RAW"
+        }
+      }
+    ]
+  }
+}
